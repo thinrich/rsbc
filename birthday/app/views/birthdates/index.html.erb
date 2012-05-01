@@ -1,0 +1,27 @@
+<h1>Listing birthdates</h1>
+
+<table>
+  <tr>
+    <th>Year</th>
+    <th>Month</th>
+    <th>Day</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+
+<% @birthdates.each do |birthdate| %>
+  <tr>
+    <td><%= birthdate.year %></td>
+    <td><%= birthdate.month %></td>
+    <td><%= birthdate.day %></td>
+    <td><%= link_to 'Show', birthdate %></td>
+    <td><%= link_to 'Edit', edit_birthdate_path(birthdate) %></td>
+    <td><%= link_to 'Destroy', birthdate, confirm: 'Are you sure?', method: :delete %></td>
+  </tr>
+<% end %>
+</table>
+
+<br />
+
+<%= link_to 'New Birthdate', new_birthdate_path %>

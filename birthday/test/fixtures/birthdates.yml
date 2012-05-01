@@ -1,0 +1,11 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/Fixtures.html
+
+one:
+  year: 
+  month: 
+  day: 
+
+two:
+  year: 
+  month: 
+  day: 

@@ -1,0 +1,20 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <b>Year:</b>
+  <%= @birthdate.year %>
+</p>
+
+<p>
+  <b>Month:</b>
+  <%= @birthdate.month %>
+</p>
+
+<p>
+  <b>Day:</b>
+  <%= @birthdate.day %>
+</p>
+
+
+<%= link_to 'Edit', edit_birthdate_path(@birthdate) %> |
+<%= link_to 'Back', birthdates_path %>

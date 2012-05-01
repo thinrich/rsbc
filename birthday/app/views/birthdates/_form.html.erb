@@ -1,0 +1,29 @@
+<%= form_for(@birthdate, url: "/birthdates") do |f| %>
+  <% if @birthdate.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@birthdate.errors.count, "error") %> prohibited this birthdate from being saved:</h2>
+
+      <ul>
+      <% @birthdate.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="field">
+    <%= f.label :year %><br />
+    <%= f.text_field :year %>
+  </div>
+  <div class="field">
+    <%= f.label :month %><br />
+    <%= f.text_field :month %>
+  </div>
+  <div class="field">
+    <%= f.label :day %><br />
+    <%= f.text_field :day %>
+  </div>
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>
