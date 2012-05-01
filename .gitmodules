@@ -1,0 +1,3 @@
+[submodule "externals/clicl"]
+	path = externals/clicl
+	url = https://code.google.com/p/clicl/
