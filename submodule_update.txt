@@ -1,0 +1,13 @@
+1) To add a new sub-repo see...
+git submodule add https://code.google.com/p/clicl/ externals/clicl
+git submodule update --init --recursive
+
+See the following for more info...
+http://stackoverflow.com/questions/2140985/setup-a-git-external-for-remote-repo
+
+2) To update an existing sub-repo, just do 
+  cd externals/clicl
+  git pull
+Make sure to commit and push or else the update to the external repo will be 
+lost.
+
