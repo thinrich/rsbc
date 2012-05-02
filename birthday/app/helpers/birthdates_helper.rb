@@ -1,20 +1,32 @@
 module BirthdatesHelper
   Supported_funcs = [:<,:>,:==,:>=,:<=]
   Error_funcs = [:<<]
+  Temp_filename = "/tmp/constraints"
+  Plato_path = "~/Research/code/clir/rsbc/externals/clicl/bin/clicl"
   
-  def fact (x)
-    if (x <= 0) 
-      1
-    else
-      x * fact(x-1)
-    end
+  def invoke_plato(code,filename)
+    # convert ruby code to plato logic and write to file
+    constraints = ruby2plato(code)
+    f = File.new(Temp_filename,"w")
+    f.puts(constraints)
+    f.close
+    # probably need to change pl-fhl-to-js to maksand as needed
+    # invoke plato and write results out to FILENAME
+    # http://tech.natemurray.com/2007/03/ruby-shell-commands.html
+    #(princ (pl-fhl-to-js '(=> (== ?month 2) (=> (not (and (gte ?day 1) (lt ?day 30)
+    cmd = Plato_path + ' --eval "(progn (princ (pl-fhl-to-js (maksand (read-file \\"' + Temp_filename + '\\")))) (quit))"' + " >> #{filename}" 
+    puts cmd
+    system(cmd)
   end
 
-
+  #1.9.3p194 :254 > ruby2plato(FebValidator.instance_method(:validate))
+  #(=> (== ?month 2) (=> (not (and (gte ?day 1) (lt ?day 30))) false)) => nil 
   def ruby2plato (s)
-  	s = ruby2kif(s.to_ast,nil)
-	s
+	@@plato_output = StringIO.new
+  	ruby2kif(s.to_ast,nil)
+  	@@plato_output.string
   end
+  
 
   # Takes an sexpression and the name of the toplevel variable that holds the object being validated
   #  Assumes only given one function def that takes a single argument; assigns VAR to that argument
@@ -117,7 +129,8 @@ module BirthdatesHelper
   def op() pk("(") end
   def cl() pk(")") end
   def sp() pk(" ") end
-  def pk (x) print x end
+  def pk (x) @@plato_output.print x end
+
 end
 
 
