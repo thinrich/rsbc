@@ -1,4 +1,66 @@
-<%= form_for(@birthdate, url: "/birthdates") do |f| %>
+<script type="text/javascript">
+	var fields = ['month','day'];
+	function hascellvalue( field ) {
+		return $( 'input[name="' + field + '"]').val().length > 0;
+	}
+	
+	function cellvalue( field ) {
+		return $( 'input[name="' + field + '"]').val();
+	}
+	
+	function validate( field ) {
+		var i = window['negx_' + field].apply( this, [cellvalue( field )] );
+		console.log( "[" + field + "] ", i );
+		
+		var $field = $( 'input[name="' + field + '"]' ).parent();
+		
+		if( i !== false ) {
+			if( !$field.hasClass( 'field_with_errors' ) )
+				$field.addClass( 'field_with_errors' );
+				
+			$field.find( 'span.status' ).html( "Error with this field" );
+			//$('<span/>').html( "Error with this field" ).appendTo( $field.parent() );
+			
+		} else if( i === false ) {
+			if( $field.hasClass( 'field_with_errors' ) ) {
+				$field.removeClass( 'field_with_errors' );
+				$field.find( 'span.status' ).html( "" );
+			}
+		}
+			
+		return i;
+	}
+	
+	function bind() {
+		
+		$.each( fields, function( i, e ) {
+			console.log( 'binding ' + e );
+			console.log( 'input[name="' + e + '"]' );
+			$( 'input[name="' + e + '"]' ).keyup( e, function( evt ) {
+				validate( evt.data );
+			});
+		});
+		
+		$( '#new_birthdate' ).submit( fields, function( evt ) {
+			console.log( 'submission attempt' );
+			var valid = true;
+			$.each( evt.data, function( i, e ) {
+				var result = validate( e );
+				if( result !== false ) {
+					valid = false;
+				}
+			});
+			console.log( valid );
+			return false;
+		})
+	}
+	
+	$(document).ready(function() {
+		bind();
+	});
+	
+</script>
+<%= form_for(@birthdate, url: "/birthdates" ) do |f| %>
   <% if @birthdate.errors.any? %>
     <div id="error_explanation">
       <h2><%= pluralize(@birthdate.errors.count, "error") %> prohibited this birthdate from being saved:</h2>
@@ -13,15 +75,18 @@
 
   <div class="field">
     <%= f.label :year %><br />
-    <%= f.text_field :year %>
+    <%= f.text_field :year, name: "year" %>
+	<span class="status"></span>
   </div>
   <div class="field">
     <%= f.label :month %><br />
-    <%= f.text_field :month %>
+    <%= f.text_field :month, name: "month" %>
+	<span class="status"></span>
   </div>
   <div class="field">
     <%= f.label :day %><br />
-    <%= f.text_field :day %>
+    <%= f.text_field :day, name: "day" %>
+	<span class="status"></span>
   </div>
   <div class="actions">
     <%= f.submit %>

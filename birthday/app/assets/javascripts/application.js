@@ -13,3 +13,10 @@
 //= require jquery
 //= require jquery_ujs
 //= require_tree .
+
+var PHP = new PHP_JS();
+var TLH = new TLH_builtins();
+var component_day = new set("day", "month");
+$(document).ready(function() {
+	init();
+});
