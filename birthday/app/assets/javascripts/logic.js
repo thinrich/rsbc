@@ -1030,7 +1030,7 @@ function newsym ()
   return 'c' + counter}
 
 function varp (x)
- {return typeof x == 'string' && x[0] == x[0].toUpperCase()}
+ {return typeof x == 'string' && x !== "" && x[0] == x[0].toUpperCase()}
 
 function symbolp (x)
  {return typeof x == 'string'}
