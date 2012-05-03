@@ -1,16 +1,8 @@
-var PHP = new PHP_JS();
-var TLH = new TLH_builtins();
 
 
 
 var univ;
 var useshortnames = false;
-
-
-
-var component_day = new set("day", "month");
-
-
 
 var prettynames = new Object();
 prettynames[undefined] = '';
@@ -22,8 +14,6 @@ prettynames[30] = 30;
 prettynames[1] = 1;
 prettynames[2] = 2;
 
-
-
 var uglynames = new Object();
 uglynames[''] = '';
 uglynames['1'] = '1';
@@ -32,8 +22,6 @@ uglynames['true'] = 'true';
 uglynames[30] = 30;
 uglynames[1] = 1;
 uglynames[2] = 2;
-
-
 
 function init () { 
    completep = true;
@@ -46,7 +34,8 @@ function init () {
    var mycellarray = new Array();
    mycellarray[0] = new cell('month', "string", "textbox", negs_month, undefined, negsupps_month, undefined, negsuppx_month, undefined, component_day, false, new set(''), true);
    mycellarray[1] = new cell('day', "string", "textbox", negs_day, undefined, negsupps_day, undefined, negsuppx_day, undefined, component_day, false, new set(''), true);
-   initspread(mycellarray); }
+   //initspread(mycellarray); 
+}
 
 
 
