@@ -1,8 +1,19 @@
+var PHP = new PHP_JS();
+var TLH = new TLH_builtins();
 
 
 
 var univ;
 var useshortnames = false;
+
+
+
+var component_day = new set("day", "month");
+var dependent = new Object();
+dependent["day"] = component_day;
+dependent["month"] = component_day;
+
+
 
 var prettynames = new Object();
 prettynames[undefined] = '';
@@ -14,6 +25,8 @@ prettynames[30] = 30;
 prettynames[1] = 1;
 prettynames[2] = 2;
 
+
+
 var uglynames = new Object();
 uglynames[''] = '';
 uglynames['1'] = '1';
@@ -22,6 +35,8 @@ uglynames['true'] = 'true';
 uglynames[30] = 30;
 uglynames[1] = 1;
 uglynames[2] = 2;
+
+
 
 function init () { 
    completep = true;
@@ -34,8 +49,7 @@ function init () {
    var mycellarray = new Array();
    mycellarray[0] = new cell('month', "string", "textbox", negs_month, undefined, negsupps_month, undefined, negsuppx_month, undefined, component_day, false, new set(''), true);
    mycellarray[1] = new cell('day', "string", "textbox", negs_day, undefined, negsupps_day, undefined, negsuppx_day, undefined, component_day, false, new set(''), true);
-   //initspread(mycellarray); 
-}
+   initspread(mycellarray); }
 
 
 
@@ -68,6 +82,30 @@ function init_index () {
 
 
 
+var x_func = function (newval, support, sofar) { 
+
+return new pair(true, newval); };
+
+
+
+var s_func = function (newval, support, sofar) { 
+
+return new pair(false, ds.adjoin(sofar, newval, equalp)); };
+
+
+
+var suppx_func = function (newval, support, sofar) { 
+
+return new pair(true, new pair(newval, support)); };
+
+
+
+var supps_func = function (newval, support, sofar) { 
+
+return new pair(false, ds.adjoin(sofar, new pair(newval, support), equalp)); };
+
+
+
 function check_univ (x0) { return ds.member(ds.get(datastore, "univ"), new expr(x0), equalp); }
 
 
@@ -89,29 +127,21 @@ function enum_boolean (x0) {
 
 
 function negx_day (x0) { 
-   var v = neg_day(function (newval, support, sofar) { 
-
-return new pair(true, newval); }, x0);
+   var v = neg_day(x_func, x0);
    if ((v instanceof expr)) return v;
    else return false; }
 
 
 
-function negs_day (x0) { return neg_day(function (newval, support, sofar) { 
-
-return new pair(false, ds.adjoin(sofar, newval, equalp)); }, x0); }
+function negs_day (x0) { return neg_day(s_func, x0); }
 
 
 
-function negsuppx_day (x0) { return neg_day(function (newval, support, sofar) { 
-
-return new pair(true, new pair(newval, support)); }, x0); }
+function negsuppx_day (x0) { return neg_day(suppx_func, x0); }
 
 
 
-function negsupps_day (x0) { return neg_day(function (newval, support, sofar) { 
-
-return new pair(false, ds.adjoin(sofar, new pair(newval, support), equalp)); }, x0); }
+function negsupps_day (x0) { return neg_day(supps_func, x0); }
 
 
 
@@ -125,10 +155,10 @@ function neg_day (onsuccess, x0) {
 
 
 
-function neg_day_b (onsuccess, nsh166) { 
+function neg_day_b (onsuccess, nsh9662) { 
    var sofar = new set();
    var tmp;
-   var x0 = nsh166;
+   var x0 = nsh9662;
    if (hascellvalue("month")) {
       var month = "month";
       month = 2;
@@ -138,7 +168,7 @@ function neg_day_b (onsuccess, nsh166) {
                tmp = onsuccess(new expr(x0), new set("month"), sofar);
                if ((ds.first(tmp) === true)) return ds.second(tmp);
                else sofar = ds.second(tmp);}}}
-      x0 = nsh166;
+      x0 = nsh9662;
       var month = "month";
       month = 2;
       if ((cellvalue("month") === month)) {
@@ -147,81 +177,73 @@ function neg_day_b (onsuccess, nsh166) {
                tmp = onsuccess(new expr(x0), new set("month"), sofar);
                if ((ds.first(tmp) === true)) return ds.second(tmp);
                else sofar = ds.second(tmp);}}}
-      x0 = nsh166;}
+      x0 = nsh9662;}
    if (!((x0 === x0))) {
       tmp = onsuccess(new expr(x0), new set(), sofar);
       if ((ds.first(tmp) === true)) return ds.second(tmp);
       else sofar = ds.second(tmp);
-      x0 = nsh166;}
+      x0 = nsh9662;}
    return sofar; }
 
 
 
-function neg_day_f (onsuccess, nsh167) { 
+function neg_day_f (onsuccess, nsh9663) { 
    var sofar = new set();
    var tmp;
-   var x0 = nsh167;
+   var x0 = nsh9663;
    if (hascellvalue("month")) {
       var month = "month";
       month = 2;
       if ((cellvalue("month") === month)) {
          if ((month === 2)) {
-            var arh167 = enum_univ(x0);
-            for (var key in ds.data(arh167)) {
-               x0 = ds.element(ds.element(arh167, key), 0);
+            var arh9663 = enum_univ(x0);
+            for (var key in ds.data(arh9663)) {
+               x0 = ds.element(ds.element(arh9663, key), 0);
                if (!((x0 < 30))) {
                   tmp = onsuccess(new expr(x0), new set("month"), sofar);
                   if ((ds.first(tmp) === true)) return ds.second(tmp);
                   else sofar = ds.second(tmp);}}}}
-      x0 = nsh167;
+      x0 = nsh9663;
       var month = "month";
       month = 2;
       if ((cellvalue("month") === month)) {
          if ((month === 2)) {
-            var arh168 = enum_univ(x0);
-            for (var key in ds.data(arh168)) {
-               x0 = ds.element(ds.element(arh168, key), 0);
+            var arh9664 = enum_univ(x0);
+            for (var key in ds.data(arh9664)) {
+               x0 = ds.element(ds.element(arh9664, key), 0);
                if (!((x0 >= 1))) {
                   tmp = onsuccess(new expr(x0), new set("month"), sofar);
                   if ((ds.first(tmp) === true)) return ds.second(tmp);
                   else sofar = ds.second(tmp);}}}}
-      x0 = nsh167;}
-   var arh169 = enum_univ(x0);
-   for (var key in ds.data(arh169)) {
-      x0 = ds.element(ds.element(arh169, key), 0);
+      x0 = nsh9663;}
+   var arh9665 = enum_univ(x0);
+   for (var key in ds.data(arh9665)) {
+      x0 = ds.element(ds.element(arh9665, key), 0);
       if (!((x0 === x0))) {
          tmp = onsuccess(new expr(x0), new set(), sofar);
          if ((ds.first(tmp) === true)) return ds.second(tmp);
          else sofar = ds.second(tmp);}}
-   x0 = nsh167;
+   x0 = nsh9663;
    return sofar; }
 
 
 
 function negx_month (x0) { 
-   var v = neg_month(function (newval, support, sofar) { 
-
-return new pair(true, newval); }, x0);
+   var v = neg_month(x_func, x0);
    if ((v instanceof expr)) return v;
    else return false; }
 
 
 
-function negs_month (x0) { return neg_month(function (newval, support, sofar) { 
-
-return new pair(false, ds.adjoin(sofar, newval, equalp)); }, x0); }
+function negs_month (x0) { return neg_month(s_func, x0); }
 
 
 
-function negsuppx_month (x0) { return neg_month(function (newval, support, sofar) { 
-
-return new pair(true, new pair(newval, support)); }, x0); }
+function negsuppx_month (x0) { return neg_month(suppx_func, x0); }
 
 
 
-function negsupps_month (x0) { return neg_month(function (newval, support, sofar) { 
-
-return new pair(false, ds.adjoin(sofar, new pair(newval, support), equalp)); }, x0); }
+function negsupps_month (x0) { return neg_month(supps_func, x0); }
 
 
 
@@ -235,10 +257,10 @@ function neg_month (onsuccess, x0) {
 
 
 
-function neg_month_b (onsuccess, nsh169) { 
+function neg_month_b (onsuccess, nsh9665) { 
    var sofar = new set();
    var tmp;
-   var x0 = nsh169;
+   var x0 = nsh9665;
    if (hascellvalue("day")) {
       if ((x0 === 2)) {
          var day = "day";
@@ -247,7 +269,7 @@ function neg_month_b (onsuccess, nsh169) {
             tmp = onsuccess(new expr(x0), new set("day"), sofar);
             if ((ds.first(tmp) === true)) return ds.second(tmp);
             else sofar = ds.second(tmp);}
-         x0 = nsh169;}
+         x0 = nsh9665;}
       if ((x0 === 2)) {
          var day = "day";
          day = cellvalue("day");
@@ -255,20 +277,20 @@ function neg_month_b (onsuccess, nsh169) {
             tmp = onsuccess(new expr(x0), new set("day"), sofar);
             if ((ds.first(tmp) === true)) return ds.second(tmp);
             else sofar = ds.second(tmp);}
-         x0 = nsh169;}}
+         x0 = nsh9665;}}
    if (!((x0 === x0))) {
       tmp = onsuccess(new expr(x0), new set(), sofar);
       if ((ds.first(tmp) === true)) return ds.second(tmp);
       else sofar = ds.second(tmp);
-      x0 = nsh169;}
+      x0 = nsh9665;}
    return sofar; }
 
 
 
-function neg_month_f (onsuccess, nsh170) { 
+function neg_month_f (onsuccess, nsh9666) { 
    var sofar = new set();
    var tmp;
-   var x0 = nsh170;
+   var x0 = nsh9666;
    if (hascellvalue("day")) {
       x0 = 2;
       var day = "day";
@@ -278,7 +300,7 @@ function neg_month_f (onsuccess, nsh170) {
             tmp = onsuccess(new expr(x0), new set("day"), sofar);
             if ((ds.first(tmp) === true)) return ds.second(tmp);
             else sofar = ds.second(tmp);}}
-      x0 = nsh170;
+      x0 = nsh9666;
       x0 = 2;
       var day = "day";
       day = cellvalue("day");
@@ -287,16 +309,15 @@ function neg_month_f (onsuccess, nsh170) {
             tmp = onsuccess(new expr(x0), new set("day"), sofar);
             if ((ds.first(tmp) === true)) return ds.second(tmp);
             else sofar = ds.second(tmp);}}
-      x0 = nsh170;}
-   var arh170 = enum_univ(x0);
-   for (var key in ds.data(arh170)) {
-      x0 = ds.element(ds.element(arh170, key), 0);
+      x0 = nsh9666;}
+   var arh9666 = enum_univ(x0);
+   for (var key in ds.data(arh9666)) {
+      x0 = ds.element(ds.element(arh9666, key), 0);
       if (!((x0 === x0))) {
          tmp = onsuccess(new expr(x0), new set(), sofar);
          if ((ds.first(tmp) === true)) return ds.second(tmp);
          else sofar = ds.second(tmp);}}
-   x0 = nsh170;
+   x0 = nsh9666;
    return sofar; }
-
 
 

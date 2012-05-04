@@ -35,8 +35,8 @@
 		
 		$.each( fields, function( i, e ) {
 			console.log( 'binding ' + e );
-			console.log( 'input[name="' + e + '"]' );
-			$( 'input[name="' + e + '"]' ).keyup( e, function( evt ) {
+			// console.log( 'input[name="' + e + '"]' );
+			$( 'input[name="' + e + '"]' ).change( e, function( evt ) {
 				validate( evt.data );
 			});
 		});
