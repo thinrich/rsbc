@@ -9,12 +9,18 @@
 	}
 	
 	function validate( field ) {
-		var i = window['negx_' + field].apply( this, [cellvalue( field )] );
+	    // Changed this so that we're calling negx_month_b, which *always* returns a set.
+	    //   If the set is empty, there is no error.
+	    // Also, there is now a DEPENDENT array, where dependent['month'] gives an array of
+	    //   all the fields that dependend on 'month'.  We ought to be calling this validate
+	    //   function on all of them.
+		var i = window['negx_' + field + "_b"].apply( this, x_func, [cellvalue( field )] );
+		var haserror = !i.empty();
 		console.log( "[" + field + "] ", i );
 		
 		var $field = $( 'input[name="' + field + '"]' ).parent();
 		
-		if( i !== false ) {
+		if( haserror ) {
 			if( !$field.hasClass( 'field_with_errors' ) )
 				$field.addClass( 'field_with_errors' );
 				
