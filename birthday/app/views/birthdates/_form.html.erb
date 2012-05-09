@@ -1,11 +1,16 @@
 <script type="text/javascript">
+
+ 	function sanitize(field) {
+		var val = $('input[name="' + field + '"]').val();
+		return parseInt(val);
+	}
 	var fields = ['month','day'];
 	function hascellvalue( field ) {
 		return $( 'input[name="' + field + '"]').val().length > 0;
 	}
 	
 	function cellvalue( field ) {
-		return $( 'input[name="' + field + '"]').val();
+		return sanitize(field);
 	}
 	
 	function validate( field ) {
@@ -15,8 +20,8 @@
 	    //   all the fields that dependend on 'month'.  We ought to be calling this validate
 	    //   function on all of them.
 		var i = window['neg_' + field + "_b"].apply( this, [x_func, cellvalue( field )] );
-		var haserror = !i.empty();
-		console.log( "[" + field + "] ", i );
+		var haserror = i instanceof expr;
+		if (haserror) { console.log( "[" + field + "] has an error: ", i ); }
 		
 		var $field = $( 'input[name="' + field + '"]' ).parent();
 		
