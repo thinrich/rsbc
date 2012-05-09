@@ -14,7 +14,7 @@
 	    // Also, there is now a DEPENDENT array, where dependent['month'] gives an array of
 	    //   all the fields that dependend on 'month'.  We ought to be calling this validate
 	    //   function on all of them.
-		var i = window['negx_' + field + "_b"].apply( this, x_func, [cellvalue( field )] );
+		var i = window['neg_' + field + "_b"].apply( this, [x_func, cellvalue( field )] );
 		var haserror = !i.empty();
 		console.log( "[" + field + "] ", i );
 		

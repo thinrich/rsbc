@@ -12,11 +12,18 @@
 //
 //= require jquery
 //= require jquery_ujs
-//= require_tree .
+//= require phpjs.tlh.namespaced.min
+//= require browser
+//= require builtins
+//= require util
+//= require logic
+//= require ds
+//= require spreadsheet
+//= require birthdaychecks
 
-var PHP = new PHP_JS();
+/*var PHP = new PHP_JS();
 var TLH = new TLH_builtins();
-var component_day = new set("day", "month");
+var component_day = new set("day", "month");*/
 $(document).ready(function() {
 	init();
 });

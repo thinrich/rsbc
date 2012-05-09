@@ -49,7 +49,8 @@ function init () {
    var mycellarray = new Array();
    mycellarray[0] = new cell('month', "string", "textbox", negs_month, undefined, negsupps_month, undefined, negsuppx_month, undefined, component_day, false, new set(''), true);
    mycellarray[1] = new cell('day', "string", "textbox", negs_day, undefined, negsupps_day, undefined, negsuppx_day, undefined, component_day, false, new set(''), true);
-   initspread(mycellarray); }
+   //initspread(mycellarray); 
+}
 
 
 
