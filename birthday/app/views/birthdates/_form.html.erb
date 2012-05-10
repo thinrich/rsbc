@@ -13,7 +13,7 @@
 		return sanitize(field);
 	}
 	
-	function validate( field ) {
+	function validate( field, x ) {
 	    // Changed this so that we're calling negx_month_b, which *always* returns a set.
 	    //   If the set is empty, there is no error.
 	    // Also, there is now a DEPENDENT array, where dependent['month'] gives an array of
@@ -26,13 +26,14 @@
 		var $field = $( 'input[name="' + field + '"]' ).parent();
 		
 		if( haserror ) {
+			
 			if( !$field.hasClass( 'field_with_errors' ) )
 				$field.addClass( 'field_with_errors' );
 				
 			$field.find( 'span.status' ).html( "Error with this field" );
 			//$('<span/>').html( "Error with this field" ).appendTo( $field.parent() );
 			
-		} else if( i === false ) {
+		} else {
 			if( $field.hasClass( 'field_with_errors' ) ) {
 				$field.removeClass( 'field_with_errors' );
 				$field.find( 'span.status' ).html( "" );
@@ -44,11 +45,13 @@
 	
 	function bind() {
 		
+		
+		
 		$.each( fields, function( i, e ) {
 			console.log( 'binding ' + e );
 			// console.log( 'input[name="' + e + '"]' );
-			$( 'input[name="' + e + '"]' ).change( e, function( evt ) {
-				validate( evt.data );
+			$( 'input[name="' + e + '"]' ).keyup( e, function( evt ) {
+				dependent[e].mapc( validate );
 			});
 		});
 		
