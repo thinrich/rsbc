@@ -18,12 +18,18 @@
 //= require util
 //= require logic
 //= require ds
-//= require spreadsheet
-//= require birthdaychecks
+//= require Birthdate_validation
+//= require Birthdate_sanitization
 
 /*var PHP = new PHP_JS();
 var TLH = new TLH_builtins();
 var component_day = new set("day", "month");*/
 $(document).ready(function() {
-	init();
+   completep = true;
+   casesensitive = true;
+   allowconflicts = true;
+   debug = false;
+   valuecount = 7;
+   init_index();
+   univ = ds.get(datastore, "univ");
 });

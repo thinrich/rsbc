@@ -1,9 +1,10 @@
 <script type="text/javascript">
-
+/*
  	function sanitize(field) {
 		var val = $('input[name="' + field + '"]').val();
 		return parseInt(val);
 	}
+*/
 	var fields = ['month','day'];
 	function hascellvalue( field ) {
 		return $( 'input[name="' + field + '"]').val().length > 0;
@@ -19,6 +20,8 @@
 	    // Also, there is now a DEPENDENT array, where dependent['month'] gives an array of
 	    //   all the fields that dependend on 'month'.  We ought to be calling this validate
 	    //   function on all of them.
+	    if (!hascellvalue(field)) return
+	    console.log("validating " + field);
 		var i = window['neg_' + field + "_b"].apply( this, [x_func, cellvalue( field )] );
 		var haserror = i instanceof expr;
 		if (haserror) { console.log( "[" + field + "] has an error: ", i ); }
@@ -50,7 +53,7 @@
 		$.each( fields, function( i, e ) {
 			console.log( 'binding ' + e );
 			// console.log( 'input[name="' + e + '"]' );
-			$( 'input[name="' + e + '"]' ).keyup( e, function( evt ) {
+			$( 'input[name="' + e + '"]' ).change( e, function( evt ) {
 				dependent[e].mapc( validate );
 			});
 		});
