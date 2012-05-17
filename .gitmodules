@@ -1,3 +1,6 @@
 [submodule "externals/clicl"]
 	path = externals/clicl
 	url = https://code.google.com/p/clicl/
+[submodule "client_side_validations"]
+	path = client_side_validations
+	url = https://ynnadrules@github.com/ynnadrules/client_side_validations.git

@@ -1,5 +1,5 @@
 class Birthdate < ActiveRecord::Base
-  validates :day, presence: true
-  validates :month, presence: true, feb: true
-  validates :year, presence: true
+  validates :day, :month, :year, numericality: true
+  validates :day, :month, presence: true
+  validates :day, :month, feb: true
 end

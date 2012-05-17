@@ -3,6 +3,6 @@ function sanitize(field) {
   switch(field) {
     case 'month': return parseInt(val);
     case 'day': return parseInt(val);
-    otherwise: return val;
+    default: return val;
   }
 }

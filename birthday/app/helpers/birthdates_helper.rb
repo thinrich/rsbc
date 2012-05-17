@@ -22,28 +22,28 @@ module BirthdatesHelper
   def create_sanitization(model,vars,filename)
   	h = Hash.new  # hash keyed on string of field name
   	model.columns.map {|x| h[x.name]=x.type}
-	f = File.new(filename, "w")
-	f.puts "function sanitize(field) {"
-	f.puts '  var val = $("input[name=\"" + field + "\"]").val();'
-	f.puts "  switch(field) {"
-	# note that vars is a set of symbols
-	vars.each {|v| f.print "    case '#{v}': return "
-				   f.print(rails_type_to_js_typecast(h[v.to_s]))
-				   f.puts "(val);" }
-	f.puts "    otherwise: return val;"
-	f.puts "  }"
-	f.puts "}"
-	f.close
+  	f = File.new(filename, "w")
+  	f.puts "function sanitize(field) {"
+  	f.puts '  var val = $("input[name=\"" + field + "\"]").val();'
+  	f.puts "  switch(field) {"
+  	# note that vars is a set of symbols
+  	vars.each {|v| f.print "    case '#{v}': return "
+  				   f.print(rails_type_to_js_typecast(h[v.to_s]))
+  				   f.puts "(val);" }
+  	f.puts "    otherwise: return val;"
+  	f.puts "  }"
+  	f.puts "}"
+  	f.close
   end
   
   def rails_type_to_js_typecast(type)
   	case type
-  	when :string, :text then "String"
-  	when :boolean then "Boolean"
-  	when :integer then "parseInt"
-	when :decimal, :float then "parseFloat"
-	else "String"
-	end
+    	when :string, :text then "String"
+    	when :boolean then "Boolean"
+    	when :integer then "parseInt"
+    	when :decimal, :float then "parseFloat"
+    	else "String"
+  	end
   end
 	
   def invoke_plato(constraints,filename)

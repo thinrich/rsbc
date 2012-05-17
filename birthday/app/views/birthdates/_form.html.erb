@@ -73,11 +73,11 @@
 	}
 	
 	$(document).ready(function() {
-		bind();
+		//bind();
 	});
 	
 </script>
-<%= form_for(@birthdate, url: "/birthdates" ) do |f| %>
+<%= form_for(@birthdate, url: "/birthdates", validate: true ) do |f| %>
   <% if @birthdate.errors.any? %>
     <div id="error_explanation">
       <h2><%= pluralize(@birthdate.errors.count, "error") %> prohibited this birthdate from being saved:</h2>
@@ -92,18 +92,18 @@
 
   <div class="field">
     <%= f.label :year %><br />
-    <%= f.text_field :year, name: "year" %>
-	<span class="status"></span>
+    <%= f.text_field :year %>
+	<!-- <span class="status"></span> -->
   </div>
   <div class="field">
     <%= f.label :month %><br />
-    <%= f.text_field :month, name: "month" %>
-	<span class="status"></span>
+    <%= f.text_field :month %>
+	<!-- <span class="status"></span> -->
   </div>
   <div class="field">
     <%= f.label :day %><br />
-    <%= f.text_field :day, name: "day" %>
-	<span class="status"></span>
+    <%= f.text_field :day %>
+	<!-- <span class="status"></span> -->
   </div>
   <div class="actions">
     <%= f.submit %>

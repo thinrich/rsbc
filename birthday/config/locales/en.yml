@@ -3,3 +3,7 @@
 
 en:
   hello: "Hello world"
+  errors:
+    messages:
+      month: "is invalid...?"
+      day: "is invalid too?"

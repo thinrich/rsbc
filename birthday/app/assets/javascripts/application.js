@@ -20,6 +20,8 @@
 //= require ds
 //= require Birthdate_validation
 //= require Birthdate_sanitization
+//= require rails.validations
+//= require rails.validations.custom
 
 /*var PHP = new PHP_JS();
 var TLH = new TLH_builtins();

@@ -25,6 +25,8 @@ gem 'jquery-rails'
 #gem 'ruby_parser'
 gem 'live_ast'
 
+gem 'client_side_validations', path: '../client_side_validations'
+
 # To use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
 
@@ -38,4 +40,4 @@ gem 'live_ast'
 # gem 'capistrano'
 
 # To use debugger
-# gem 'ruby-debug19', :require => 'ruby-debug'
+#gem 'ruby-debug19', :require => 'ruby-debug'

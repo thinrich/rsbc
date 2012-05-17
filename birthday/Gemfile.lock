@@ -1,3 +1,8 @@
+PATH
+  remote: ../client_side_validations
+  specs:
+    client_side_validations (3.1.4)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -114,6 +119,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  client_side_validations!
   coffee-rails (~> 3.2.1)
   jquery-rails
   live_ast
