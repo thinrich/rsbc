@@ -1,0 +1,7 @@
+Since both Plato JS and Client Side Validations JS rely on knowing the names of the input fields we have a problem: 
+	<%= f.input :day, as: "day" %> # puts out <input type="text" name="day" /> vs <input type="text" name="birthdate[day]" />
+
+	Plato takes the names of the symbols :day, :month, :year and uses that as to what to look for in the DOM. We could edit the cellvalue() function to do $('input[name=birthdate[day]]').
+
+	On the other side, Client side validation, I assume, expects the names to be birthdate[year|day|month] and so its jquery plugin relies on that. However, there may be a way to override this. I haven't checked for sure yet, though.
+

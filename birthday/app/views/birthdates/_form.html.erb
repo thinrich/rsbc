@@ -7,7 +7,7 @@
 */
 	var fields = ['month','day'];
 	function hascellvalue( field ) {
-		return $( 'input[name="' + field + '"]').val().length > 0;
+		return $( 'input[name="birthdate[' + field + ']"]').val().length > 0;
 	}
 	
 	function cellvalue( field ) {
