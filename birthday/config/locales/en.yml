@@ -5,4 +5,7 @@ en:
   hello: "Hello world"
   errors:
     messages:
-      feb: "date is invalid"
+      month:
+        feb: "February can only have a max of 29 days"
+      day:
+        feb: "Days in February need to be from 1-29"

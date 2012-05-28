@@ -5,3 +5,16 @@ Since both Plato JS and Client Side Validations JS rely on knowing the names of 
 
 	On the other side, Client side validation, I assume, expects the names to be birthdate[year|day|month] and so its jquery plugin relies on that. However, there may be a way to override this. I haven't checked for sure yet, though.
 
+
+Sanitizers maybe created as hooks using the `before_*` hooks available:
+
+before_validation
+after_validation
+before_save
+around_save
+before_create
+around_create
+after_create
+after_save
+
+We could tell developers that they need to use these types of hooks to do any sort of pre-validation messing with of data.
