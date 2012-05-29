@@ -10,8 +10,16 @@ class FebValidator < ActiveModel::EachValidator
   end 
 end
 
-module ActiveModel::Validations::HelperMethods
-  def validates_february( *attr_names )
-    validates_with FebValidator, _merge_attributes( attr_names )
-  end
-end
+# class FebValidator < ActiveModel::Validator
+#   def validate( record )
+#     puts "validating #{record.inspect}"
+#     record.errors[:day] = "error in day"
+#   end
+# end
+
+# module ActiveModel::Validations::HelperMethods
+#   def validates_february( *attr_names )
+#     validates_with FebValidator, _merge_attributes( attr_names )
+#   end
+# end
+
