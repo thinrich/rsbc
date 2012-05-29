@@ -8,6 +8,5 @@ http://stackoverflow.com/questions/2140985/setup-a-git-external-for-remote-repo
 2) To update an existing sub-repo, just do 
   cd externals/clicl
   git pull
-Make sure to commit and push or else the update to the external repo will be 
-lost.
+If editing the external repo in place, make sure to commit and push or else the edit to the external repo will be lost.
 

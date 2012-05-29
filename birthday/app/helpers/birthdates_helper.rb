@@ -70,7 +70,6 @@ module BirthdatesHelper
   	return @@plato_output.string, @@vars
   	
   end
-  
 
   # Takes an sexpression and the name of the toplevel variable that holds the object being validated
   #  Assumes only given one function def that takes a single argument; assigns VAR to that argument
@@ -95,7 +94,7 @@ module BirthdatesHelper
 		op; pk("or "); ruby2kif(sexp[1],var); sp; ruby2kif(sexp[2],var); cl
 	when :not #(:not x)
 		op; pk("not "); ruby2kif(sexp[1],var); cl
-  	else puts sexpr; raise "unknown sexpr type";  # drop any unknown things
+  	else puts sexp; raise "unknown sexp type";  # throw error when found unknown operator
   	end
   end
 

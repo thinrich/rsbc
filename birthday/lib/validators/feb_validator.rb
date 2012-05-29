@@ -1,11 +1,13 @@
 class FebValidator < ActiveModel::EachValidator
-  def validate_each( record, attr_name, value )
-    if record.month == 2
-      unless record.day >= 1 and record.day < 30 #and !record.day and f(record.day) > 3 then
-        record.errors.add( attr_name, :day, options.merge( value: value ) )
-      end 
+
+  def validate( record )
+    if record.month == 2 then
+        unless record.day >= 1 and record.day < 30
+               record.errors[:day] << "days in february must be between 1 and 29"
+ 	       	   # record.errors.add( attr_name, :day, options.merge( value: value ) )
+        end
     end
-  end
+  end 
 end
 
 module ActiveModel::Validations::HelperMethods
