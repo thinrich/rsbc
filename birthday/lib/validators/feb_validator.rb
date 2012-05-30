@@ -1,4 +1,4 @@
-class FebValidator < ActiveModel::EachValidator
+class FebValidator < ActiveModel::Validator
 
   def validate( record )
     if record.month == 2 then
