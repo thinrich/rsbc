@@ -1,0 +1,6 @@
+
+To generate the emacs TAGS file for ruby code, go to rsbc/birthday and run the following.
+Then can use M-. to find the definition of functions (even those defined by Rails).
+
+ctags -f TAGS --extra=-f --languages=-javascript --exclude=.git --exclude=log -e -R . $(rvm gemdir)/gems/
+
