@@ -1,0 +1,186 @@
+# Define a sanitizer (something that changes the state of an object)
+
+require 'active_support/core_ext/array/wrap'
+require "active_support/core_ext/module/anonymous"
+require 'active_support/core_ext/object/blank'
+require 'active_support/core_ext/object/inclusion'
+
+module ActiveModel #:nodoc:
+
+  # NEED TO UPDATE DOCS
+  # == Active Model Validator
+  #
+  # A simple base class that can be used along with
+  # ActiveModel::Validations::ClassMethods.validates_with
+  #
+  #   class Person
+  #     include ActiveModel::Validations
+  #     validates_with MyValidator
+  #   end
+  #
+  #   class MyValidator < ActiveModel::Validator
+  #     def validate(record)
+  #       if some_complex_logic
+  #         record.errors[:base] = "This record is invalid"
+  #       end
+  #     end
+  #
+  #     private
+  #       def some_complex_logic
+  #         # ...
+  #       end
+  #   end
+  #
+  # Any class that inherits from ActiveModel::Validator must implement a method
+  # called <tt>validate</tt> which accepts a <tt>record</tt>.
+  #
+  #   class Person
+  #     include ActiveModel::Validations
+  #     validates_with MyValidator
+  #   end
+  #
+  #   class MyValidator < ActiveModel::Validator
+  #     def validate(record)
+  #       record # => The person instance being validated
+  #       options # => Any non-standard options passed to validates_with
+  #     end
+  #   end
+  #
+  # To cause a validation error, you must add to the <tt>record</tt>'s errors directly
+  # from within the validators message
+  #
+  #   class MyValidator < ActiveModel::Validator
+  #     def validate(record)
+  #       record.errors.add :base, "This is some custom error message"
+  #       record.errors.add :first_name, "This is some complex validation"
+  #       # etc...
+  #     end
+  #   end
+  #
+  # To add behavior to the initialize method, use the following signature:
+  #
+  #   class MyValidator < ActiveModel::Validator
+  #     def initialize(options)
+  #       super
+  #       @my_custom_field = options[:field_name] || :first_name
+  #     end
+  #   end
+  #
+  # The easiest way to add custom validators for validating individual attributes
+  # is with the convenient <tt>ActiveModel::EachValidator</tt>. For example:
+  #
+  #   class TitleValidator < ActiveModel::EachValidator
+  #     def validate_each(record, attribute, value)
+  #       record.errors.add attribute, 'must be Mr. Mrs. or Dr.' unless value.in?(['Mr.', 'Mrs.', 'Dr.'])
+  #     end
+  #   end
+  #
+  # This can now be used in combination with the +validates+ method
+  # (see <tt>ActiveModel::Validations::ClassMethods.validates</tt> for more on this)
+  #
+  #   class Person
+  #     include ActiveModel::Validations
+  #     attr_accessor :title
+  #
+  #     validates :title, :presence => true
+  #   end
+  #
+  # Validator may also define a +setup+ instance method which will get called
+  # with the class that using that validator as its argument. This can be
+  # useful when there are prerequisites such as an +attr_accessor+ being present
+  # for example:
+  #
+  #   class MyValidator < ActiveModel::Validator
+  #     def setup(klass)
+  #       klass.send :attr_accessor, :custom_attribute
+  #     end
+  #   end
+  #
+  # This setup method is only called when used with validation macros or the
+  # class level <tt>validates_with</tt> method.
+  #
+  class Sanitizer
+    attr_reader :options
+
+    # Returns the kind of the validator. Examples:
+    #
+    #   PresenceValidator.kind   # => :presence
+    #   UniquenessValidator.kind # => :uniqueness
+    #
+    def self.kind
+      @kind ||= name.split('::').last.underscore.sub(/_sanitizer$/, '').to_sym unless anonymous?
+    end
+
+    # Accepts options that will be made available through the +options+ reader.
+    def initialize(options)
+      @options = options.freeze
+    end
+
+    # Return the kind for this validator.
+    def kind
+      self.class.kind
+    end
+
+    # Override this method in subclasses with validation logic, adding errors
+    # to the records +errors+ array where necessary.
+    def sanitize(record)
+      raise NotImplementedError, "Subclasses must implement a sanitize(record) method."
+    end
+  end
+
+  # +EachSanitizer+ is a sanitizer which iterates through the attributes given
+  # in the options hash invoking the <tt>sanitize_each</tt> method passing in the
+  # record, attribute and value.
+  #
+  # All Active Model sanitizers are built on top of this sanitizer.
+  # class EachSanitizer < Sanitizer
+  #   attr_reader :attributes
+
+  #   # Returns a new validator instance. All options will be available via the
+  #   # +options+ reader, however the <tt>:attributes</tt> option will be removed
+  #   # and instead be made available through the +attributes+ reader.
+  #   def initialize(options)
+  #     @attributes = Array.wrap(options.delete(:attributes))
+  #     raise ":attributes cannot be blank" if @attributes.empty?
+  #     super
+  #     check_sanitizability!
+  #   end
+
+  #   # Performs sanitization on the supplied record. By default this is a noop.
+  #   def sanitize(record)
+    
+  #     attributes.each do |attribute|
+  #       value = record.read_attribute_for_validation(attribute)
+  #       next if (value.nil? && options[:allow_nil]) || (value.blank? && options[:allow_blank])
+  #       sanitize_each(record, attribute, value)
+  #     end
+  #   end
+
+  #   # Override this method in subclasses with the sanitization logic, adding
+  #   # errors to the records +errors+ array where necessary.
+  #   def sanitize_each(record, attribute, value)
+  #     raise NotImplementedError, "Subclasses must implement a sanitize_each(record, attribute, value) method"
+  #   end
+
+  #   # Hook method that gets called by the initializer allowing verification
+  #   # that the arguments supplied are valid. You could for example raise an
+  #   # +ArgumentError+ when invalid options are supplied.
+  #   def check_sanitizability!
+  #   end
+  # end
+
+  # # +BlockValidator+ is a special +EachValidator+ which receives a block on initialization
+  # # and call this block for each attribute being validated. +validates_each+ uses this validator.
+  # class BlockValidator < EachValidator
+  #   def initialize(options, &block)
+  #     @block = block
+  #     super
+  #   end
+
+  #   private
+
+  #   def validate_each(record, attribute, value)
+  #     @block.call(record, attribute, value)
+  #   end
+  # end
+end
