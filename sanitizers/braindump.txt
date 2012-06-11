@@ -1,0 +1,112 @@
+
+
+----------------------------------------------------
+High-level bits
+----------------------------------------------------
+
+Timeline:
+1) HTTP request arrives at server
+2) Request data given to controller in PARAMS array
+3) PARAMS array used to instantiate an object
+	3.1) Typecasting performed if object inherits from ActiveRecord 
+4) Controller mucks around
+5) Controller calls SAVE (see http://api.rubyonrails.org/classes/ActiveRecord/Callbacks.html)
+	...
+	5.1) before_validation
+	5.2) Validation
+
+
+The goal of the project is to mimic any validation that the server does on the client.  In particular, we want the client to ensure that it rejects user-data only if the server rejects it.  That means ensuring that any manipulation of data that arises in steps 1-5.1 is also mimiced on the client; for if we fail to mimic that manipulation of data then when the validator in step 5.2 runs on the client, it may be running on the wrong data and hence reject user-data it ought not reject.  We call all the manipulation of the data appearing in the PARAMS array Sanitization.
+
+For example, suppose we have a model with a field DESCRIPTION, and that the controller first truncates DESCRIPTION to 100 characters, and then feeds it to a validator that ensures only certain characters are used.  Arguably this is an odd setup---why not just validate that the DESCRIPTION is at most 100 characters; the user might want to know that her input is being truncated.  But it gets the point across.  Another example: the app takes a product quantity and replaces it with the absolute value of the quantity before validating that there are at least that many products in inventory.  This is again of questionable utility because if the user entered a negative number, it is likely she made a typo and would want to correct it instead of having the system *assume* that the - was just a mistake.  Another example is more problematic.  Suppose the user selects a value from a list of values, where the data sent to the server is an index (e.g. in the range 1...<num of values>).  Now suppose that the app has that same list represented as an array but 0-indexed; thus, the developer changes that field's value to the original value minus 1.  This example is especailly problematic because if we run the sanitizer more than once, we'll get the wrong answer (or an error).
+
+Right now there is no convention in Rails for sanitization.  A developer can simply choose to manipulate data wherever she likes.  But suppose we built infrastructure within Rails so the developer makes explicit what the sanitizers for each model are, just like they make explicit what their validators are.  (1) Programmatically this is a pain (see rsbc/sanitizers/notworking for my failed attempt).  (2) More importantly, where would these sanitizers be called?
+
+Options:
+5.1) Hook into before_validation
+This seems like the obvious answer, but unfortunately it is problematic because the developer can choose to run valid? manually.  Presumably, the validators should *always* be run *after* the data has been sanitized.
+
+5.2) Augment valid? to first run sanitizers.  This gives us the wrong answer for sanitizers that are not idemptotent, such as the 1- sanitizer.
+
+3.2) Run just after typecasting.  We can do this for ActiveModel as well as ActiveRecord.  We just modify their INITIALIZE functions.  ActiveModel does little, as I recall, and ActiveRecord does just a few things (one of which is typecasting).  The downside to this is that if we allow sanitizers to reference associations (just as validators do), then we may not be able to run a sanitizer b/c the associated other model has not yet been created.  One workaround is to limit sanitizers to not utilize associations; however, any legitimate use of associations within a sanitizer will then need to be placed outside our special sanitization construct and hence we won't be able to mimic it on the client.
+
+So in short, I don't see a great place to put the sanitizer.  One option would be to require the developer to choose a place to put it, i.e. enumerate 5-10 possiblities and make her choose one when she declares a sanitizer in a model.
+
+
+Below I grabbed some of my notes from looking at this problem.
+ 
+
+----------------------------------------------------
+Mimicing Validation functionality for Sanitization
+----------------------------------------------------
+
+May 22, 2012  Excerpt
+
+Let's suppose we know that the developer always calls SAVE on a form submission.  I'm trying to identify the sequence of events where the form's data can be sanitized.
+
+- <attribute>_before_type_cast (http://api.rubyonrails.org/classes/ActiveRecord/Base.html)
+- controller
+- save (unalterable)
+- before_validation (callback: http://api.rubyonrails.org/classes/ActiveRecord/Callbacks.html)
+- validation
+
+What if we created our own Sanitizer class?  The default implementation would be just to cast the parameters as is done by Rails right now.  But obviously the user could refine that.  Would that be an ActiveRecord subclass, e.g. ActiveRecord::Sanitizer, or does it belong elsewhere?  It would, for example, need to enable sanitization from data derived from multiple models at once.  Though that shouldn't be a problem---sort of like associations.  What's more worrisome is when there are forms not backed by ActiveRecord.  Ah... validators are a subclass of ActiveModel, not ActiveRecord.  And as I recall you can use ActiveModel stuff in classes that aren't backed by a database---that's the whole point.  So we'd probably want ActiveModel::Sanitizer.
+
+To make that work we'd need to find the code that Rails calls to typecast before handing off a parameter list to a controller.
+
+Custom Validations explained
+http://guides.rubyonrails.org/active_record_validations_callbacks.html#performing-custom-validations  
+
+Active Model Validations API (with link to code on Github)
+http://api.rubyonrails.org/classes/ActiveModel/Validations.html
+
+A TypeCaster module
+Description: http://www.ruby-forum.com/topic/2933236
+Code: https://gist.github.com/1339540
+
+Slides describing how/why before_type_cast
+http://www.slideshare.net/thehoagie/active-records-beforetypecast
+
+attributes_before_type_cast(): returns a hash of attributes before typecasting
+API: http://api.rubyonrails.org/classes/ActiveRecord/AttributeMethods/BeforeTypeCast.html
+
+Here's one thing I don't get.  When does typecasting and *_before_type_casting happen?  (1) Before the controller sees the cache or (2) before the validation runs?  It only seems to make sense that the answer is (1) since the validation could be called multiple times.  But then what happens if the model isn't an ActiveRecord?  I guess the point is that the typecasting only happens if Rails knows how to do it (e.g. it's an attribute for an ActiveRecord model).  All other fields it leaves alone.  
+
+One potential test: what happens when we create a new model from scratch?  The validation doesn't run, I know.  Would type-casting run?
+
+Anyway, it makes sense to me to add a sanitizer for an activemodel.  
+
+Crap.  There's already something called sanitization in ActiveRecord.  But that's specific for SQL queries.  
+
+ActiveRecord imports ActiveModel's validations, so we should do the same thing when we add our Sanitizers.
+
+ActiveModel explanation and code on github
+https://github.com/rails/rails/tree/master/activemodel
+
+ActionPack (code for routing/controllers/views)
+https://github.com/rails/rails/tree/master/actionpack
+Need to surf this to figure out how we can tap into Rails to add our own sanitizers before the controller gets ahold of them.  (I think.)
+
+----------------------------
+Assocations
+----------------------------
+
+- Basic idea: models are related to one another, and we want that reflected in code, e.g. if every User has a single Profile, we want to write user.profile and profile.user.  Associations in Rails are macros that add that code (but only work when the underlying database tables are set up properly).  3 relationships, as usual: 1-1, 1-many, many-many.  
+
+- A tutorial on modifying multiple models within a single form.  Google "rails forms for multiple models"
+http://railsforum.com/viewtopic.php?id=719
+
+- Write-ups explaining how to do validation without an underlying database table.
+http://yehudakatz.com/2010/01/10/activemodel-make-any-ruby-object-feel-like-activerecord/
+http://mislav.uniqpath.com/rails/validations-in-any-class/
+http://railscasts.com/episodes/219-active-model?view=asciicast
+
+- Extending asset pipeline with custom pre-processor
+http://psionides.eu/2012/05/06/extending-asset-pipeline-with-custom-preprocessors/
+
+- Includes adding rake task to be run on deployment; could also run the task whenever the server starts up: check if the JS is older than the validator files and recompile if necessary.
+http://merbist.com/2011/08/30/deploying-a-rails-3-1-app-gotchas/
+
+- Simulating typecasting in non-ar model
+http://grokbase.com/t/gg/rubyonrails-talk/11b4xwrcwb/rails-how-to-simulate-typecasting-of-activerecord-in-non-ar-classes
+
