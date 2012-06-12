@@ -61,6 +61,22 @@ module BirthdatesHelper
     system(cmd)
   end
 
+  def check_plato(constraints)
+    # dump constraints to file
+    f = File.new(Temp_filename,"w")
+    f.puts(constraints)
+    f.close
+    # Check if reader gets same as string
+    puts "KIF string:"
+    puts '"' + constraints + '"'
+    puts "Plato read:"
+    cmd = Plato_path + ' --eval "(progn (prin1 (read-file \\"' + Temp_filename + '\\")) (quit))"'
+    system(cmd)
+    puts "Plato check (if errors, transformed constraints printed, then errors printed):"
+    cmd = Plato_path + ' --eval "(progn (pl-fhl-to-js-check (maksand (read-file \\"' + Temp_filename + '\\"))) (quit))"'
+    system(cmd)
+  end
+
   #1.9.3p194 :254 > ruby2plato(FebValidator.instance_method(:validate))
   #(=> (== ?month 2) (=> (not (and (gte ?day 1) (lt ?day 30))) false)) => nil 
   def ruby2plato (s)
