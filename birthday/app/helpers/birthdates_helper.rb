@@ -1,22 +1,44 @@
 module BirthdatesHelper
   require 'set'
   Supported_funcs = [:<,:>,:==,:>=,:<=]
-  Error_funcs = [:<<]
   Temp_filename = "/tmp/constraints"
   Plato_path = "~/Research/code/clir/rsbc/externals/clicl/bin/clicl"
+  Outdir = "#{Rails.root}/app/assets/javascripts/"
+  
+  # For logging errors 
+  File.open("#{Rails.root}/log/rsbc.log", 'w')
+  @@rsbc_logger ||= Logger.new("#{Rails.root}/log/rsbc.log")
 
-  # note: we should just take the model and grab all the appropriate validators from it  
-  # mimic_server_side_validation(Birthdate,FebValidator,"/Users/thinrich/Research/code/clir/rsbc/birthday/app/assets/javascripts/")
-  def mimic_server_side_validation(model,validator,outdir)
+  # mimic_server_side_validation(Birthdate) # Logs errors to /log/rsbc.log # puts validation js in /app/assets/javascripts
+  def mimic_server_side_validation(model)
 	# convert validator code to logic (KIF) and generate JS validation code
- 	kifstring,vars = ruby2plato(validator.instance_method(:validate))
-	validfile = outdir + model.name + "_validation.js"
-	invoke_plato(kifstring,validfile)
+	validations = get_validations(model)
+	validations.each do |validator| 
+		id = 0  # for creating unique js files 
+		kifstring,vars = ruby2plato(validator)
+		validfile = Outdir + model.name + "_" + id.to_s +  "_validation.js"
+		invoke_plato(kifstring,validfile)
+		check_plato(kifstring)  # for testing
+		id = id + 1
+	end
 
 	# create sanitization code from model's typing info
 	sanifile = outdir + model.name + "_sanitization.js"
 	create_sanitization(model,vars,sanifile)
 	return [validfile,sanifile]
+  end
+
+  # Grabs all validation methods used in the model or defined in a vaildator used by the model
+  # Returns an array of UnboundMethods
+  def get_validations(model)
+    validators = model._validate_callbacks.map {|callback| callback.raw_filter}     # Gives the Validators or the symbols model defined validation methods 
+    validators.delete_if {|x| x.to_s.include? "ActiveModel::Validations"}           # We only want custom validation methods
+    model_method_names = validators.collect {|x| if x.class == Symbol then x end }  # example would be   :validate_month
+    model_method_names.delete_if{|x| x == nil }					    
+    validators.delete_if {|x| x.class == Symbol } 				    # separating the model validations and the validator validations
+    methods = validators.map{ |validator| validator.class.instance_method(:validate) }       # -----/
+    model_method_names.each do |def_name| methods << model.instance_method(def_name) end     #    Building array of UnboundMethods -----/ 
+    return methods
   end
 
   def create_sanitization(model,vars,filename)
@@ -47,7 +69,7 @@ module BirthdatesHelper
   end
 	
   def invoke_plato(constraints,filename)
-	# constraints must be in KIF (i.e. a string)
+    # constraints must be in KIF (i.e. a string)
     # convert ruby code to plato logic and write to file
     f = File.new(Temp_filename,"w")
     f.puts(constraints)
@@ -81,7 +103,7 @@ module BirthdatesHelper
   #(=> (== ?month 2) (=> (not (and (gte ?day 1) (lt ?day 30))) false)) => nil 
   def ruby2plato (s)
 	@@plato_output = StringIO.new
-    @@vars = Set.new()
+        @@vars = Set.new()
   	ruby2kif(s.to_ast,nil)
   	return @@plato_output.string, @@vars
   	
@@ -95,50 +117,70 @@ module BirthdatesHelper
  	case sexp[0]
   	when :defn then ruby2kif(sexp[3],sexp[2][1])  #(:defn name (:args v1 v2...) stmt)
   	when :scope then ruby2kif(sexp[1],var)
-  	when :block then ruby2kif(sexp[1],var)
+  	when :block then  parseBlock(sexp, var) #There could be more than one satement in the block 
   	when :call then rubyterm2kif(sexp, var)
 	when :if  # then sexp  # (:if cond then else)
 		if sexp[2]
 		  op; pk("=> "); ruby2kif(sexp[1],var); sp; ruby2kif(sexp[2],var); cl;
 		end
 		if sexp[3] 
-			op;pk("=> " ); op;pk("not "); ruby2kif(sexp[1],var);cl; sp; ruby2kif(sexp[3],var);cl
+	          op;pk("=> " ); op;pk("not "); ruby2kif(sexp[1],var);cl; sp; ruby2kif(sexp[3],var);cl
 		end
+ 
 	when :and #(:and x y)
 		op; pk("and "); ruby2kif(sexp[1],var); sp; ruby2kif(sexp[2],var); cl
 	when :or #(:or x y)
 		op; pk("or "); ruby2kif(sexp[1],var); sp; ruby2kif(sexp[2],var); cl
 	when :not #(:not x)
 		op; pk("not "); ruby2kif(sexp[1],var); cl
-  	else puts sexp; raise "unknown sexp type";  # throw error when found unknown operator
-  	end
+  	else puts sexp; raise "unknown sexp type"
+		log_sexp(sexp)		
+	end  # throw error when found unknown operator
   end
 
+  # Slightly hacky, if block[] has more than one statment, then we need one prefixed "and" for every two statments inside block[]inside block[]
+  def parseBlock(sexp, var)
+	if !sexp[2] then ruby2kif(sexp[1],var); sp  # There is only one statement
+	else
+		for i in 2..sexp.size-1
+		  op; pk("and ") 
+		end
+		for i in 1..sexp.size-1
+		  if i == 1 then  ruby2kif(sexp[i],var)
+		  else ruby2kif(sexp[i],var); cl end
+		end
+ 	end
+  end
+
+
   def rubyterm2kif(sexp, var)
-#  	print "rubyterm2kif("
-#  	print sexp
-#  	puts ")"
+	#print "rubyterm2kif("
+  	#print sexp
+  	#puts ")"
 	return unless sexp
-	sexp = ruby_simplifier(sexp,var)
-    case sexp[0]
-    when :call then rubycall2kif(sexp,var)
-    else rubyobj2kif(sexp,var)
-    end
+	if ruby_error_sink(sexp) then
+		pk("false")
+ 	else
+	  sexp = ruby_simplifier(sexp,var)
+	  #print sexp
+	  #puts ""
+    	  case sexp[0]
+    	  when :call then rubycall2kif(sexp,var)
+    	  else rubyobj2kif(sexp,var)
+    	  #puts @@plato_output.string
+          end
+        end
   end
 
   
   def rubycall2kif(sexp, var)
 	return if !sexp or sexp[0] != :call   # (:call thing op arglist)
-	if ruby_error_sink(sexp,var) then
-	   	pk("false")
-	else
-		op; rubyfunc2kif(sexp[2],var);  # (op
-		if sexp[1] then sp; rubyterm2kif(sexp[1],var) end  # thing added to start of arglist
-		args = sexp[3]
-		args = args[1..args.length-1]
-		args.each { |a| sp; rubyterm2kif(a,var) }  # (rest of) arglist
-		cl;    # closing paren
-    end
+	op; rubyfunc2kif(sexp[2],var);  # (op
+	if sexp[1] then sp; rubyterm2kif(sexp[1],var) end  # thing added to start of arglist
+	args = sexp[3]
+	args = args[1..args.length-1]
+	args.each { |a| sp; rubyterm2kif(a,var) }  # (rest of) arglist
+	cl;    # closing paren
   end
  
   # simplify form-field references from x.field to "?field"
@@ -151,6 +193,9 @@ module BirthdatesHelper
        and sexp[1][1] === var then
        	@@vars.add sexp[2]
     	[:lvar, "?" + sexp[2].to_s]
+    elsif sexp and sexp[0] === :call and sexp[1][0] === :self then
+	@@vars.add sexp[2]
+	[:self, "?" + sexp[2].to_s]
     else
     	sexp
     end
@@ -161,13 +206,21 @@ module BirthdatesHelper
   	case sexp[0]
   	when :lvar then pk(sexp[1])
   	when :lit then pk(sexp[1])
+	when :self then pk(sexp[1])
   	when :str then qu; pk(sexp[1]); qu
-  	else puts sexp; raise "unknown sexpr object: "
+  	else log_obj(sexp); raise "unknown sexpr object: "
   	end
   end
 
-  # whether a given sexp represents the statement "this is an error" 
-  def ruby_error_sink(sexp,var) sexp and sexp[0] === :call and Error_funcs.include?(sexp[2]) end
+  # Skips over adding the error messege. The error messege does not affect the logic used in this translator
+  # Possible TODO: Package up the error messege to be used on the client side
+  def ruby_error_sink(sexp) 
+    if sexp[0] === :call and sexp[2] === :errors then
+	return true
+    elsif sexp[1][0] and sexp [1][0] === :call then
+	ruby_error_sink(sexp[1])
+    end
+  end
 
   # output ruby function to KIF function  
   def rubyfunc2kif(f, var) 
@@ -186,8 +239,9 @@ module BirthdatesHelper
   def cl() pk(")") end
   def sp() pk(" ") end
   def pk (x) @@plato_output.print x end
-
+  # shorthands for logging
+  def log_sexp(sexp) lg("ERROR: keyword " + sexp[0].to_s + " has no translation. From: " + sexp.to_s) end
+  def log_obj(sexp) lg("ERROR: object unknown : " + sexp[0].to_s + " has no translation. From: " + sexp.to_s) end 
+  def lg (x) @@rsbc_logger.fatal(x) end
+  
 end
-
-
-

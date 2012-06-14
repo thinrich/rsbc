@@ -18,3 +18,10 @@ after_create
 after_save
 
 We could tell developers that they need to use these types of hooks to do any sort of pre-validation messing with of data.
+
+====== Jun  14 ========
+
+o Racc::ParseError: 
+  parse error on value ":" (tCOLON)
+
+- (mike) I get this error when I try to do a .to_ast on any method found within the Birthdate model in the rails console. I'm not sure if this is specific to me or you guys are having the same issue. I don't think I got this error in previous versions of the repository.

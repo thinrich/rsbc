@@ -1,0 +1,19 @@
+Mikes additions / changes to BirthdatesHelper.rb
+
+X Changed ruby_error_sink so that it doesn't look for '<<' operator since it is possible that we will need to translate this 
+   for some other case, instead the method now looks for :errors recursively
+
+X mimic_server_side_validation Now takes just a model, and runs a loop creating a new validation js for each method that the model uses to validate.
+	One drawback that I'm not sure how to approach is that there is a lot of js created (A whole new file for every method) just "window dressing" at this point
+	but something to think about. Maybe we could consodlidate somehow.
+
++ Added get_validations(model)  - Takes a model and uses the callback chain to grab all the validation methods defined in external validators
+	and within the model itself. Returns an array of unboundMethods to be used in mimic_server_side_validations
+
++ Added parseBlock(sexp) - Allows more than one statement to be used in the validation method 
+
++ sexp_logger - writes error log messeges to path/to/rails/log/rsbc.log  This will work for any rails app (I think).
+
++ Additions to ruby2kif
+	- :self => used in validation methods defined in the model itself
+	- :ivar => Instance Variables :: At this point we are just treating these as regular variables (lvar) we will see how long we can get away with it!
