@@ -1,0 +1,13 @@
+General TODO's with no particular order
+
+[ ] Figure out how to handle nil and empty? 
+
+[ ] Dynamically adding functions to ClientSideValidations.validators.local
+
+[ ] Analyze the methods returned on issue.rb from get_validations (decide if we should worry about them or not)
+
+[ ] association with fixed_version on issue.rb 
+
+[ ] extend logging to cover the types of validators. 
+
+[ ] Write program to parse logs and divy up validators into corresponding classes
