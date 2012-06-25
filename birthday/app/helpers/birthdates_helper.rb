@@ -96,14 +96,18 @@ module BirthdatesHelper
     f.puts(constraints)
     f.close
     # Check if reader gets same as string
-    puts "KIF string:"
-    puts '"' + constraints + '"'
-    puts "Plato read:"
-    cmd = Plato_path + ' --eval "(progn (prin1 (read-file \\"' + Temp_filename + '\\")) (quit))"'
+    print "S-expression check:"
+    cmd = Plato_path + ' --eval "(progn (handler-case (read-file \\"' + Temp_filename + '\\") (condition () (quit 1))) (quit 0))"'
     system(cmd)
-    puts "Plato check (if errors, transformed constraints printed, then errors printed):"
-    cmd = Plato_path + ' --eval "(progn (pl-fhl-to-js-check (maksand (read-file \\"' + Temp_filename + '\\"))) (quit))"'
-    system(cmd)
+    noerr = $?.success?
+    if noerr then puts "Passed" else puts "Failed" end
+    if noerr then
+        puts "Plato check (if errors, transformed constraints printed, then errors printed):"
+        cmd = Plato_path + ' --eval "(if (pl-fhl-to-js-check (maksand (read-file \\"' + Temp_filename + '\\"))) (quit 1) (quit 0))"'
+        system(cmd)
+        noerr &= $?.success?
+    end
+    noerr
   end
 
   #1.9.3p194 :254 > ruby2plato(FebValidator.instance_method(:validate))
