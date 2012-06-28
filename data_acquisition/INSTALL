@@ -1,0 +1,22 @@
+These are the three files that will be needed to gather our data.
+
+TO INSTALL
+
+Step one: 
+  Get as many apps as possible into a directory (we will call it the root directory) 
+    EX:
+    cd path/to/root/
+    ls
+    birthday redmine some_other_app  ... 
+
+Step two: Install all the apps (I think this will be the hardest part, when I get back I will start working on a script that will attempt to do this
+  and flag the failures. Then I suppose I will work through as many failures as I can to try and get them running)
+
+Step three: we need a script that will go into each app directory and...
+  - copy divvy.rake to each application/lib/tasks
+  - copy rsbc_helper.rb (birthdates_helper.rb renamed) to application/app/helpers 
+  - run $> rake rsbc_translate
+  (this sets up the rails environment, grabs all models and runs them all through our translator which logs information about them)
+
+Setp four: After all the log files are created we can run piecharts.rb which must be placed in the root directory containing all the applications.
+  This will parse all the log files and report statistics to the console. 

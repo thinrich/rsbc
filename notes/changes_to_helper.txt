@@ -17,3 +17,12 @@ X mimic_server_side_validation Now takes just a model, and runs a loop creating 
 + Additions to ruby2kif
 	- :self => used in validation methods defined in the model itself
 	- :ivar => Instance Variables :: At this point we are just treating these as regular variables (lvar) we will see how long we can get away with it!
+	- :return => just skips and recursve over next part
+	- :true => prints "true" on plato_output
+	- :false => "false"
+
+X Sanitations use @@vars instead of vars (Don't think it will be a problem)
+
++ Added external method call functionality. (recursively goes into method call and evalutates (hopefully) to either true or false. 
+
++ Added support for instance vars and vars called without a '@' infront of it
