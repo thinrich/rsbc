@@ -6,11 +6,6 @@ module RsbcHelper
   Outdir = "#{Rails.root}/app/assets/javascripts/"    
   @@vars = Set.new()
 
- #----------Might not be used ---------------
-#  index = File.new(Outdir + "index.js", 'w')  # Manifest file for rails (for including all the validaitons / sanitations)
-#  File.open("#{Rails.root}/app/assets/javascripts/application.js" 'a').puts "//=require client"
- #-------------------------------------------
-  
   # For logging errors 
   File.open("#{Rails.root}/log/rsbc/rsbc.log", 'a')
   @@rsbc_logger ||= Logger.new("#{Rails.root}/log/rsbc/rsbc.log")
@@ -20,21 +15,22 @@ module RsbcHelper
     # convert validator code to logic (KIF) and generate JS validation code
     @model = model
     validations = get_validations(model)
-    validations = remove_unknowns(validations)
-    kifstring = "(and" 
+    validations = remove_unwanted(validations)
+    #kifstring = "(and" 
+    kifstring = ""
     validations.each do |validator| 
       @owner = validator.owner
       @method_name = validator.name
       begin 
-        kifstring << ruby2plato(validator)[0]
-        if check_plato(kifstring) then log_success() else log_failure() end
+        puts @owner.to_s + " " + @method_name.to_s
+        kifstring = ruby2plato(validator)[0]
+        if check_plato(kifstring) then log_success() else log_failure(kifstring) end
       rescue Exception => exc      # May want to my more explicit and include cases for differant exceptions to make logs more useful
-        log_unknown()
+        log_unknown(exc)
       end
     end
-    kifstring += ")"
+    #kifstring += ")"
     validfile = Outdir + model.name + "_validation.js"
-    check_plato(kifstring)  # for testing
     #invoke_plato(kifstring,validfile)
 
     # create sanitization code from model's typing info
@@ -47,7 +43,6 @@ module RsbcHelper
   # Returns an array of UnboundMethods
   def get_validations(model)
     validators = model._validate_callbacks.map {|callback| callback.raw_filter}     # Gives the Validators or the symbols (name of model defined validation methods) 
-    validators.delete_if {|x| x.to_s.include? "ActiveModel::Validations"}           # We only want custom validation methods
     model_method_names = validators.collect {|x| if x.class == Symbol then x end }  # example would be   :validate_month
     model_method_names.delete_if{|x| x == nil }					    
     validators.delete_if {|x| x.class == Symbol } 			                      	    # separating the model validations and the validator validations
@@ -57,10 +52,13 @@ module RsbcHelper
   end
 
   # used to only grab Validators and Explicitly defined validations in the model
-  def remove_unknowns(validators)
-    validators.delete_if {|x| x.to_s.include? "validate_associated_records_for"}
-    validators.delete_if {|x| x.owner != @model}
-  end
+  def remove_unwanted(validators)
+    # keep if inherits or owned by
+    # delete if !(inherits or woned by)
+                # !inherits and !owned by
+    validators.delete_if {|x| x.owner == @model and x.to_s.include? "validate_associated_records_for" }
+    validators.delete_if {|x| x.to_s.include? "ActiveModel::Validations" or x.to_s.include? "ActiveRecord::Validations" }
+    validators.delete_if {|x| x.owner != @model and !(x.owner < ActiveModel::Validator)} end
 
   def create_sanitization(model,vars,filename)
   	h = Hash.new  # hash keyed on string of field name
@@ -102,7 +100,7 @@ module RsbcHelper
     cmd = Plato_path + ' --eval "(progn (princ (pl-fhl-to-js (maksand (read-file \\"' + Temp_filename + '\\")))) (quit))"' + " > #{filename}" 
     #puts cmd
     system(cmd)
- end
+  end
 
   def check_plato(constraints)
     # dump constraints to file
@@ -116,10 +114,10 @@ module RsbcHelper
     noerr = $?.success?
     if noerr then puts "Passed" else puts "Failed" end
     if noerr then
-        puts "Plato check (if errors, transformed constraints printed, then errors printed):"
-        cmd = Plato_path + ' --eval "(if (pl-fhl-to-js-check (maksand (read-file \\"' + Temp_filename + '\\"))) (quit 1) (quit 0))"'
-        system(cmd)
-        noerr &= $?.success?
+    puts "Plato check (if errors, transformed constraints printed, then errors printed):"
+    cmd = Plato_path + ' --eval "(if (pl-fhl-to-js-check (maksand (read-file \\"' + Temp_filename + '\\"))) (quit 1) (quit 0))"'
+    system(cmd)
+    noerr &= $?.success?
     end
     noerr
   end
@@ -128,7 +126,25 @@ module RsbcHelper
   #(=> (== ?month 2) (=> (not (and (gte ?day 1) (lt ?day 30))) false)) => nil 
   def ruby2plato (s)
     @@plato_output = StringIO.new
-  	ruby2kif(s.to_ast,nil)
+    
+    # DATA-AQCU: remove next 10 lines, uncomment 12'th line
+    ast = s.to_ast
+    if ast[0] == :defn 
+      vars = ast[2][1]
+        if ast[3][0] == :scope and ast[3][1][0] == :block 
+          block = ast[3][1]
+          log_num_blocks(block.size-1)
+            for i in 1..block.size-1
+              log_block(i) #log block
+              ruby2kif(block[i],vars)
+              if !error_added(block[i]) then log_block_semantics(i) end
+            end
+        else puts "ERROR"
+        end
+    else puts "ERROR"
+    end
+           
+  	#ruby2kif(s.to_ast,nil)
   	return @@plato_output.string, @@vars
   end
 
@@ -276,6 +292,10 @@ module RsbcHelper
     end
   end
 
+  # Recursively tells if the sexp ever adds anything to the errors array TODO Not sure if this is exhaustive
+  def error_added(sexp)
+    return true if sexp.to_s.include? ":error"
+  end
 
   # shorthands
   def qu() pk('"') end
@@ -290,10 +310,13 @@ module RsbcHelper
   def log_keyword(sexp) lg("KEYWORD " + sexp[0].to_s ) end
   def log_func(f) lg("FUNCTION " + f.to_s  ) end
   def log_method(method) lg("METHOD " + method.to_s ) end
-  def log_database(sexp) lg("TODO") end
-  def log_unknown() lg("UNKNOWN") end
+  def log_database(sexp) lg("DATABASE " + sexp.to_s ) end
+  def log_unknown(exc) lg("UNKNOWN " + exc.to_s.delete("\n")) end
   def log_success() lg("SUCCESS") end 
-  def log_failure() lg("FAILURE :: KIFSTRING = " + @@plato_output.string) end
-  def lg (x) @@rsbc_logger.fatal(Rails.application.class.parent_name + "~" + @owner.name.to_s + "#" + @method_name.to_s + " " + x) end
+  def log_failure(kifstring) lg("FAILURE " + kifstring.to_s ) end
+  def log_block(i) lg("BLOCK " + i.to_s ) end
+  def log_num_blocks(num) lg("NUM_BLOCKS " + num.to_s) end
+  def log_block_semantics(i) lg("BLOCK_SEMANTICS " + i.to_s) end
+  def lg (x) @@rsbc_logger.fatal(Rails.application.class.parent_name + "~" + @model.to_s + "~" + @method_name.to_s + " " + x) end
 
 end
