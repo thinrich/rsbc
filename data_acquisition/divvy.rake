@@ -3,16 +3,17 @@ task :mkdirs do
   FileUtils.mkdir_p("#{Rails.root}/log/rsbc")
 end
 
-task :rsbc_translate => [:mkdirs, :environment] do 
+task :rsbc => [:mkdirs, :environment] do 
   include RsbcHelper
 
   # Get models
   Dir.glob("#{Rails.root}" + '/app/models/*.rb').each { |file| require file }
   @models = ActiveRecord::Base.send :subclasses
+  puts @models
 
   @models.each do |model| 
     classify_type(model)
-    mimic_server_side_validation( model ) 
+    mimic_server_side_validation(model) 
   end 
 end
 
@@ -27,12 +28,13 @@ def classify_type(model)
   
   validators = get_validations(model)
   validators.each do |validator|
-    types.print app_name.to_s + "~" + validator.owner.name.to_s + "#" + validator.name.to_s
+    method = validator.to_s.split(" ")[1]
+    types.print app_name.to_s + "~" + model.to_s + "~" + validator.name.to_s + " " + method
     if validator.owner == model and validator.name.to_s.include? "validate_associated_records_for"
       type = "association"
     elsif validator.owner == model 
       type = "model_defined"
-    elsif validator.owner.name.to_s.include? "ActiveModel::EachValidator" or validator.owner.name.to_s.include? "ActiveModel::Validator"
+    elsif method.to_s.include? "ActiveModel::Validations" or method.to_s.include? "ActiveRecord::Validations"
       type = "builtin"
     elsif validator.owner < ActiveModel::Validator
       type = "validator"

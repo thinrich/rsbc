@@ -1,0 +1,8 @@
+Place this folder inside the directory containing all the Rails applications (that have been previously installed and 
+make sure that the rake task 'rsbc' has been run successfully on all of them) 
+
+Then run piecharts.rb like
+
+~> ruby piecharts.rb
+
+tpye 'help' for a list of commands once in the program 
