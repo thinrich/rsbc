@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'rails', '3.2.1'
+gem 'rails'
 
 # Bundle edge Rails instead:
 # gem 'rails', :git => 'git://github.com/rails/rails.git'
@@ -26,6 +26,8 @@ gem 'jquery-rails'
 gem 'live_ast'
 
 gem 'client_side_validations', path: '../client_side_validations'
+
+gem 'cenforce', path: '../cenforce'
 
 # To use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'

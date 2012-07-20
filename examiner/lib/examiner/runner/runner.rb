@@ -7,6 +7,9 @@ module Examiner
 
     source_root Examiner::SOURCE_ROOT
 
+    class_option :basedir, aliases: "-d", desc: "Specify base dir", default: Dir.pwd
+    class_option :interactive, aliases: "-i", type: :boolean, desc: "Interactive mode", default: false
+
     no_tasks do
       def root( action, path )
 
@@ -25,18 +28,14 @@ module Examiner
 
     desc "examine [options]", "Run the examiner to checkout ruby on rails apps from github and perform some emperical testing on them"
     def examine
-      options[:keyword] ||= Examiner.search_keyword
-      options[:keyword].join "+"
-
-      repos = Crawler.new.search options
-      repos
+      
     end
 
     desc "search KEYWORDS", "search github repos by keywords"
     method_option :language, aliases: "-l", default: "ruby", desc: "Refine by language"
     method_option :start_page, aliases: "-p", desc: "Start from page n"
     method_option :store, aliases: "-s", type: :boolean, default: true, desc: "Store results to file, specify basedir with -d"
-    method_option :basedir, aliases: "-d", desc: "Specify base dir", default: Dir.pwd
+    # method_option :basedir, aliases: "-d", desc: "Specify base dir", default: Dir.pwd
     ### TODO: determine how to handle the keywords with spaces
 
     def search( keyword )
@@ -49,7 +48,7 @@ module Examiner
       request = "#{Examiner.github_search_uri}/#{keyword}?#{options.to_query}"
 
       if options[:store]
-        invoke :prepare
+        invoke :prepare, [], basedir:options[:basedir]
         inside 'examiners_room', verbose: true do
           get request, "repos.json"
         end
@@ -61,7 +60,7 @@ module Examiner
     end
 
     desc "prepare", "makes needed directory structures for tests"
-    method_option :basedir, aliases: "-d", desc: "Specify base dir", default: Dir.pwd
+    # method_option :basedir, aliases: "-d", desc: "Specify base dir", default: Dir.pwd
     def prepare
       destination_root = options[:basedir]
       say_status :preparing, "workspace", true
@@ -73,45 +72,53 @@ module Examiner
     end
 
     desc "execute", "executes the tests"
-    method_option :basedir, aliases: "-d", desc: "Specify base dir", default: Dir.pwd
+    # method_option :basedir, aliases: "-d", desc: "Specify base dir", default: Dir.pwd
     method_option :rails_env, aliases: "-e", desc: "Specify rails env", default: "development"
-    method_option :single, type: :boolean, default: true, desc: "Execute a single test"
+    method_option :how_many, type: :numeric, aliases: "-n", default: 1, desc: "How many tests to execute"
     def execute
       destination_root = options[:basedir]
 
       say_status :executing, "the tests", true
 
-      inside 'examiners_room/apps', verbose:true do
+      inside 'examiners_room/apps', verbose:true do |dest_root|
         say_status :loading, "the repo json file", true
-        json = JSON.load( File.open( "repos.json" ) )
+        json = JSON.load( File.open( "../repos.json" ) )
 
-        if json.has_key? :repositories
-          how_many = options[:single] ? 1 : json[:repositories].count
-          json[:repositories].take( how_many ).each do |repo|
-            say_status :cloning, repo.name, true
-            url = "#{repo.url}.git"
-            run "git clone #{url}", verbose: true
-            inside repo.name, verbose: true do
-              run "bundle install RAILS_ENV=#{options[:rails_env]} && bundle exec rake --trace db:migrate RAILS_ENV=#{options[:rails_env]} && bundle exec rake --trace db:seed RAILS_ENV=#{options[:rails_env]}", verbose: true
-              
-              copy_file "divvy.rake", "/lib/tasks/divvy.rake", verbose: true
-              copy_file "rsbc_helper.rb", "/app/helpers/rsbc_helper.rb", verbose: true
+        if json.has_key? "repositories"
+          how_many = options[:how_many] || json["repositories"].count
+          json["repositories"].take( how_many ).each do |repo|
 
-              run "bundle exec rake --trace rsbc_translate RAILS_ENV=#{options[:rails_env]}", verbose: true
+            no = no?( "Does #{repo["name"]} look viable?" )
 
+            if no
+              say_status :skipping, repo["name"]
+              next
             end
 
-            inside '../logs', verbose: true do
-              empty_directory repo.name
-              inside repo.name, verbose: true do
+            say_status :cloning, repo["name"], true
+            url = "#{repo["url"]}.git"
 
-              end
+            run "git clone #{url}", verbose: true unless File.exists?( "#{dest_root}/#{repo["name"]}")
+
+            inside repo["name"], verbose: true do |dest_root|
+              run "bundle install && bundle exec rake --trace db:migrate RAILS_ENV=#{options[:rails_env]} && bundle exec rake --trace db:seed RAILS_ENV=#{options[:rails_env]}", verbose: true
+              
+              run "cp -R #{self.class.source_root}/data_acquisition/divvy.rake #{dest_root}/lib/tasks", verbose: true
+              run "cp -R #{self.class.source_root}/data_acquisition/rsbc_helper.rb #{dest_root}/app/helpers", verbose: true
+
+              run "bundle exec rake --trace rsbc RAILS_ENV=#{options[:rails_env]}", verbose: true
             end
           end
+        else
+          say "You have a bad repos.json file. It didn't match our expected structure.", Color::RED
         end
-
-        copy_file "piecharts.rb", "piecharts.rb", verbose: true
       end
+    end
+
+    desc "pies", "Copies piechart goods to dir containg all apps"
+    method_option :app_dir, aliases: "-d", default:File.join( 'examiners_room', 'apps' ), desc: "Apps directory"
+    def pies
+      run "cp -R #{self.class.source_root}/data_acquisition/piecharts #{options[:basedir]}/#{options[:app_dir]}/piecharts", verbose: true
     end
   end
 end
