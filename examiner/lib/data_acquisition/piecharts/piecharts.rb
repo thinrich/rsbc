@@ -1,10 +1,8 @@
-# sript to parse log files in rails/log/rsbc/rsbc.log and turn it into useable stats
-
 require( "./validation")
 require( "./stats")
 require( "./app_database")
 
-LIMIT = 10  # Modify this to set how many values are listed in under sexp, function and keyword lists
+LIMIT = 100  # Modify this to set how many values are listed in under sexp, function and keyword lists
 
 #=========================================================== MAIN METHOD ======================================#
 puts "type help for commands, 'q' to quit"
@@ -61,10 +59,18 @@ while !(menu == "q" || menu == "quit" || menu == "exit")
     puts "stats       print out general stats about all validations found"
     puts "builtins    print out info on the builtin validations"
     puts "successes   print info on validations that succeeded"
+    puts "failures    print info on validations that did not pass"
     puts "inspect     inspect a single validation, Input format: App~Model~validation "
     puts "list        list all apps, then enter app name to list models within, then enter model to list validations"
+    puts "query       search validations based on error type"
 
   when 'stats' then data.output_stats 
+  when '1' then data.output_keyword
+  when '2' then data.output_function
+  when '3' then data.output_sexp
+  when '4' then data.output_method
+  when '5' then data.output_database 
+  when '6' then data.output_unknown
   when 'builtins' then data.output_builtins
   when 'blocks' then data.output_block_stats
   when 'successes' then 
@@ -101,5 +107,6 @@ while !(menu == "q" || menu == "quit" || menu == "exit")
     data.query(error, value)
     
   end
+  print "enter command: "
   menu = gets.chomp
 end

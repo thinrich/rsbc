@@ -1,6 +1,7 @@
 module RsbcHelper
   require 'set'
   Supported_funcs = [:<,:>,:==,:>=,:<=]
+  Database_calls = [:find]
   Temp_filename = "/tmp/constraints"
   Plato_path = "~/Research/code/clir/rsbc/externals/clicl/bin/clicl"
   Outdir = "#{Rails.root}/app/assets/javascripts/"    
@@ -9,6 +10,11 @@ module RsbcHelper
   # For logging errors 
   File.open("#{Rails.root}/log/rsbc/rsbc.log", 'a')
   @@rsbc_logger ||= Logger.new("#{Rails.root}/log/rsbc/rsbc.log")
+
+  # Get models
+  Dir.glob("#{Rails.root}" + '/app/models/*.rb').each { |file| require file }
+  @@models = ActiveRecord::Base.send :subclasses
+  @@models.collect! {|x| x.name.to_sym }
 
   # mimic_server_side_validation(Birthdate) # Logs errors to /log/rsbc.log # puts validation js in /app/assets/javascripts/client
   def mimic_server_side_validation(model)
@@ -53,9 +59,6 @@ module RsbcHelper
 
   # used to only grab Validators and Explicitly defined validations in the model
   def remove_unwanted(validators)
-    # keep if inherits or owned by
-    # delete if !(inherits or woned by)
-                # !inherits and !owned by
     validators.delete_if {|x| x.owner == @model and x.to_s.include? "validate_associated_records_for" }
     validators.delete_if {|x| x.to_s.include? "ActiveModel::Validations" or x.to_s.include? "ActiveRecord::Validations" }
     validators.delete_if {|x| x.owner != @model and !(x.owner < ActiveModel::Validator)} end
@@ -127,7 +130,7 @@ module RsbcHelper
   def ruby2plato (s)
     @@plato_output = StringIO.new
     
-    # DATA-AQCU: remove next 10 lines, uncomment 12'th line
+    # Run on blocks: to restore, remove next 14 lines, uncomment ruby2kif
     ast = s.to_ast
     if ast[0] == :defn 
       vars = ast[2][1]
@@ -135,13 +138,13 @@ module RsbcHelper
           block = ast[3][1]
           log_num_blocks(block.size-1)
             for i in 1..block.size-1
-              log_block(i) #log block
+              log_block(i) 
               ruby2kif(block[i],vars)
               if !error_added(block[i]) then log_block_semantics(i) end
             end
-        else puts "ERROR"
+        else puts "ERROR: cannot run on blocks"; log_unknown(ast)
         end
-    else puts "ERROR"
+    else puts "ERROR: cannot run on blocks"; log_unknown(ast)
     end
            
   	#ruby2kif(s.to_ast,nil)
@@ -204,7 +207,7 @@ module RsbcHelper
   
   def rubycall2kif(sexp, var)
 	return if !sexp or sexp[0] != :call   # (:call thing op arglist)
-	unless catch_nil(sexp, var)
+	unless catch_nil(sexp, var) or catch_database(sexp)
 	  op; rubyfunc2kif(sexp,var);  # (op
 	  if sexp[1] then sp; rubyterm2kif(sexp[1],var) end  # thing added to start of arglist
 	  args = sexp[3]
@@ -247,6 +250,14 @@ module RsbcHelper
       return false
     end
   end
+
+  # Catches the case where a database call is used
+  def catch_database(sexp)
+    if @@models.include? sexp[1][1] and Database_calls.include? sexp[2] 
+      log_database(sexp[2])
+    end
+  end
+
  
   def rubyobj2kif(sexp, var)
   	return unless sexp

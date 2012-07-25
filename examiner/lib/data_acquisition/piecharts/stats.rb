@@ -44,9 +44,9 @@ class Stats
     @keyword = 0; @keyword_h = Hash.new {|hash, key| hash[key] = 0}
     @function = 0; @function_h = Hash.new {|hash, key| hash[key] = 0}
     @sexp = 0; @sexp_h = Hash.new {|hash, key| hash[key] = 0}
-    @method = 0
-    @database = 0
-    @unknown = 0
+    @method = 0; @method_h = Hash.new {|hash, key| hash[key] = 0}
+    @database = 0; @database_h = Hash.new {|hash, key| hash[key] = 0}
+    @unknown = 0; @unknown_h = Hash.new {|hash, key| hash[key] = 0}
     #---------------------------#
   end
 
@@ -136,6 +136,7 @@ class Stats
             @keyword_h[sexp] = 1
           end
         end
+      end
       unless validation.get_function.empty?
         @function = @function + 1
         validation.get_function.each do |sexp|
@@ -145,21 +146,46 @@ class Stats
             @function_h[sexp] = 1
           end
         end
-       end
+      end
+      unless validation.get_database.empty?
+        @database = @database + 1
+        validation.get_database.each do |sexp|
+          if @database_h.include? sexp then 
+            @database_h[sexp] = @database_[sexp] + 1 
+          else 
+            @database_h[sexp] = 1
+          end
+        end
       end
 
       unless validation.get_method.empty?
         @method = @method + 1
+        validation.get_method.each do |sexp|
+          if @method_h.include? sexp then 
+            @method_h[sexp] = @method_h[sexp] + 1 
+          else 
+            @method_h[sexp] = 1
+          end
+        end
       end
-
       unless validation.get_unknown.empty?
         @unknown = @unknown + 1
+        validation.get_unknown.each do |sexp|
+          if @unknown_h.include? sexp then 
+            @unknown_h[sexp] = @unknown_h[sexp] + 1 
+          else 
+            @unknown_h[sexp] = 1
+          end
+        end
       end
 
       if validation.successful? then @successful = @successful + 1 end
       @sorted_sexp = @sexp_h.sort{|key, value| -1*(key[1] <=> value[1]) }
       @sorted_keyword = @keyword_h.sort{|key, value| -1*(key[1] <=> value[1]) }
       @sorted_function = @function_h.sort{|key, value| -1*(key[1] <=> value[1])}
+      @sorted_method = @method_h.sort{|key, value| -1*(key[1] <=> value[1])}
+      @sorted_database = @database_h.sort{|key, value| -1*(key[1] <=> value[1])}
+      @sorted_unknown = @unknown_h.sort{|key, value| -1*(key[1] <=> value[1])}
     end
   end
 
@@ -239,31 +265,75 @@ class Stats
     puts "   5. Database: " + @database.to_s
     puts "   6. Unknown: " + @unknown.to_s
     puts ""
-    puts "=========== Most common S-Expression failures ============= "
+    puts "Enter 1-6 for more info on above " 
+  end
+  
+  def output_sexp
+    puts "=========== Most common Sexp failures ============= "
 
     i = 0
     while i < LIMIT and @sorted_sexp[i]
-      puts "   " + @sorted_sexp[i][1].to_s + " ----- " + @sorted_sexp[i][0].to_s 
+      puts "   " + @sorted_sexp[i][1].to_s + " occurrences ----- " + @sorted_sexp[i][0].to_s 
       i = i + 1
     end
     puts ""
-  
+  end
+
+  def output_keyword
     puts "=========== Most common Keyword failures ============= "
 
     i = 0
     while i < LIMIT and @sorted_keyword[i]
-      puts "   " + @sorted_keyword[i][1].to_s + " ------ " + @sorted_keyword[i][0].to_s 
+      puts "   " + @sorted_keyword[i][1].to_s + " occurrences ------ " + @sorted_keyword[i][0].to_s 
       i = i + 1
     end 
     puts ""
+  end
+
+  def output_function
     puts "=========== Most common Function failures ============= "
 
     i = 0
     while i < LIMIT and @sorted_function[i]
-      puts "   " + @sorted_function[i][1].to_s + " ------ " + @sorted_function[i][0].to_s 
+      puts "   " + @sorted_function[i][1].to_s + " occurrences ------ " + @sorted_function[i][0].to_s 
       i = i + 1
     end
+    puts ""
   end
+
+  def output_database
+    puts "=========== Most common Database failures ============= "
+
+    i = 0
+    while i < LIMIT and @sorted_database[i]
+      puts "   " + @sorted_database[i][1].to_s + " occurrences ------ " + @sorted_database[i][0].to_s 
+      i = i + 1
+    end
+    puts ""
+  end
+
+  def output_unknown
+    puts "=========== Most common Unknown failures ============= "
+
+    i = 0
+    while i < LIMIT and @sorted_unknown[i]
+      puts "   " + @sorted_unknown[i][1].to_s + " occurrences ------ " + @sorted_unknown[i][0].to_s 
+      i = i + 1
+    end
+    puts ""
+  end
+
+  def output_method
+    puts "=========== Most common Method failures ============= "
+
+    i = 0
+    while i < LIMIT and @sorted_method[i]
+      puts "   " + @sorted_method[i][1].to_s + " occurrences ------ " + @sorted_method[i][0].to_s 
+      i = i + 1
+    end
+    puts ""
+  end
+
 
   def output_builtins
     puts "=========== Builtins breakdown ====================="
