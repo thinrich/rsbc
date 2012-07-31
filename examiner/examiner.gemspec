@@ -14,4 +14,7 @@ Gem::Specification.new do |gem|
   gem.name          = "examiner"
   gem.require_paths = ["lib"]
   gem.version       = Examiner::VERSION
+
+  gem.add_dependency 'thor'
+  gem.add_dependency 'httparty'
 end
