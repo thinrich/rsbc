@@ -82,10 +82,6 @@ class Validation
     end
   end
 
-  def add_unknown_semantic(block_num)
-    @blocks[block_num] = "UNKNOWN SEMANTICS"
-  end
-  
   def print_errors
     puts "SEXP: " + @errors[:SEXP].to_s.delete(",") + ", "
     puts "KEYWORD: " + @errors[:KEYWORD].to_s.delete(",") + ", "
@@ -97,12 +93,14 @@ class Validation
 
   def block_analyze
     for i in 0..@blocks.size-1
-      if @blocks[i].nil? or (@blocks[i].empty? and @blocks[i] != "UNKNOWN SEMANTICS")
+      if @blocks[i].nil? or @blocks[i].empty? 
         @successful_blocks << i
-      elsif @blocks[i] == "UNKNOWN SEMANTICS"
-        @semantics << i 
       end
     end
+  end
+
+  def add_unknown_semantic(block_num)
+    @semantics << block_num
   end
 
   def display_blocks
