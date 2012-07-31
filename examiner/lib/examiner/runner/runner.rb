@@ -10,22 +10,6 @@ module Examiner
     class_option :basedir, aliases: "-d", desc: "Specify base dir", default: Dir.pwd
     class_option :interactive, aliases: "-i", type: :boolean, desc: "Interactive mode", default: false
 
-    no_tasks do
-      def root( action, path )
-
-      end
-
-      def apps( action, path )
-
-      end
-
-      def reports( action, path )
-
-      end
-
-
-    end
-
     desc "examine [options]", "Run the examiner to checkout ruby on rails apps from github and perform some emperical testing on them"
     def examine
       
@@ -88,17 +72,25 @@ module Examiner
           how_many = options[:how_many] || json["repositories"].count
           json["repositories"].take( how_many ).each do |repo|
 
-            no = no?( "Does #{repo["name"]} look viable?" )
+            if options[:interactive]
+              no = no?( "Does #{repo["name"]} look viable?" )
 
-            if no
-              say_status :skipping, repo["name"]
-              next
+              if File.exists?( )
+                say_status :skipping, repo["name"]
+                next
+              end
             end
 
             say_status :cloning, repo["name"], true
             url = "#{repo["url"]}.git"
 
             run "git clone #{url}", verbose: true unless File.exists?( "#{dest_root}/#{repo["name"]}")
+
+            if !File.exists?( "#{dest_root}/#{repo["name"]}/app" )
+              say_status :skipping, "#{repo["name"]} is not an app, it's probably just a gem or some other thing", verbose: true
+              run "rm -rf #{dest_root}/#{repo["name"]}", verbose: true
+              next
+            end
 
             inside repo["name"], verbose: true do |dest_root|
               run "bundle install && bundle exec rake --trace db:migrate RAILS_ENV=#{options[:rails_env]} && bundle exec rake --trace db:seed RAILS_ENV=#{options[:rails_env]}", verbose: true
