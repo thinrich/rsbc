@@ -74,8 +74,7 @@ module Examiner
 
             if options[:interactive]
               no = no?( "Does #{repo["name"]} look viable?" )
-
-              if File.exists?( )
+              if no
                 say_status :skipping, repo["name"]
                 next
               end
@@ -85,6 +84,11 @@ module Examiner
             url = "#{repo["url"]}.git"
 
             run "git clone #{url}", verbose: true unless File.exists?( "#{dest_root}/#{repo["name"]}")
+
+            if !File.exists?( "#{dest_root}/#{repo["name"]}/Gemfile" )
+              say_status :skipping, "#{repo["name"]} is not a Rails 3 app because it has no Gemfile", verbose: true
+              next
+            end
 
             if !File.exists?( "#{dest_root}/#{repo["name"]}/app" )
               say_status :skipping, "#{repo["name"]} is not an app, it's probably just a gem or some other thing", verbose: true
