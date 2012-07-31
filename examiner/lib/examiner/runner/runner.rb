@@ -69,7 +69,9 @@ module Examiner
         json = JSON.load( File.open( "../repos.json" ) )
 
         if json.has_key? "repositories"
+
           how_many = options[:how_many] || json["repositories"].count
+
           json["repositories"].take( how_many ).each do |repo|
 
             if options[:interactive]
@@ -87,22 +89,37 @@ module Examiner
 
             if !File.exists?( "#{dest_root}/#{repo["name"]}/Gemfile" )
               say_status :skipping, "#{repo["name"]} is not a Rails 3 app because it has no Gemfile", verbose: true
-              next
+              run "rm -rf #{dest_root}/#{repo["name"]}", verbose: true
+              retry
             end
 
-            if !File.exists?( "#{dest_root}/#{repo["name"]}/app" )
+            if !File.directory?( "#{dest_root}/#{repo["name"]}/app" )
               say_status :skipping, "#{repo["name"]} is not an app, it's probably just a gem or some other thing", verbose: true
               run "rm -rf #{dest_root}/#{repo["name"]}", verbose: true
-              next
+              retry
+            end
+
+            if !File.directory?( "#{dest_root}/#{repo["name"]}/app/models" ) or !Dir["#{dest_root}/#{repo["name"]}/app/models/*"].empty?
+              say_status :skipping, "#{repo["name"]} either doesn't have the app/models dir or just doesn't have any models in that directory", verbose: true
+              run "rm -rf #{dest_root}/#{repo["name"]}", verbose: true
+              retry
             end
 
             inside repo["name"], verbose: true do |dest_root|
-              run "bundle install && bundle exec rake --trace db:migrate RAILS_ENV=#{options[:rails_env]} && bundle exec rake --trace db:seed RAILS_ENV=#{options[:rails_env]}", verbose: true
+              run "RAILS_ENV=#{options[:rails_env]} bundle install && bundle exec rake --trace db:migrate && bundle exec rake --trace db:seed", verbose: true
               
-              run "cp -R #{self.class.source_root}/data_acquisition/divvy.rake #{dest_root}/lib/tasks", verbose: true
-              run "cp -R #{self.class.source_root}/data_acquisition/rsbc_helper.rb #{dest_root}/app/helpers", verbose: true
+              if !Dir["#{dest_root}/#{repo["name"]}/lib/tasks"]
+                empty_directory 'lib/tasks', verbose: true
+              end
 
-              run "bundle exec rake --trace rsbc RAILS_ENV=#{options[:rails_env]}", verbose: true
+              run "cp -R #{self.class.source_root}/data_acquisition/divvy.rake #{dest_root}/lib/tasks/", verbose: true
+
+              if !Dir["#{dest_root}/#{repo["name"]}/app/helpers"]
+                empty_directory 'app/helpers'
+              end
+              run "cp -R #{self.class.source_root}/data_acquisition/rsbc_helper.rb #{dest_root}/app/helpers/", verbose: true
+
+              run "RAILS_ENV=#{options[:rails_env]} bundle exec rake --trace rsbc", verbose: true
             end
           end
         else
