@@ -1,20 +1,21 @@
 #   FIELDS ::    [ App_name ~ Model_Name ~ Validation_Name, Status, SEXP, values, KEYWORD, values, FUNCTION, values, METHOD, values, DATABASE, values, UNKNOWN, values] 
 #                |----------ID----------------------------| | T/F | |--------------------------------ERRORS-----------------------------------------------------------|
 class Validation
+  require 'set'
 
-  attr_accessor :success, :kifstring, :num_blocks, :id, :num_true, :semantics, :errors
+  attr_accessor :success, :kifstring, :num_blocks, :id, :num_true, :semantics, :errors, :index, :blocks
 
   def initialize(id)
     @id = id 
     @errors = {:SEXP => [], :KEYWORD => [], :FUNCTION => [], :METHOD => [], :DATABASE => [], :UNKNOWN => []}
     @success = false # Corresponds to if check_plato succeeded or not
-    @blocks = Array.new
-    @semantics = 0
-    @num_true = 0
+    @blocks = Array.new #  where block[i] = the errors in that block (a Set) and i = the block number
+    @semantics = []	# entries correspond to the block that has the semantic error (adds nothing to :errors)
+    @successful_blocks = []  	# entries correspond to the block that was succesfully translated end
   end
   
   def init_blocks(size)
-    @blocks = Array.new(size, [])
+    @blocks = Array.new(size)
     @num_blocks = size
   end
 
@@ -42,6 +43,22 @@ class Validation
     @errors[:UNKNOWN]
   end
 
+  def get_num_semantics
+    if @semantics.empty? then 0 else @semantics.size end
+  end
+
+  def get_num_true_blocks
+    if @successful_blocks.empty? then 0 else @successful_blocks.size end
+  end
+
+  def successful_blocks?
+    return !@successful_blocks.empty?
+  end
+ 
+  def semantic_blocks?
+    return !@semantics.empty?
+  end
+
   def add_error(type, value, block)
     if type == :FAILURE then
       @kifstring = value
@@ -49,16 +66,23 @@ class Validation
       @errors[type] << value
     else
       @errors[type] << value
-      @blocks[block] << [type, value]
+      if @blocks[block] then 
+        @blocks[block] << [type, value]
+      else 
+        @blocks[block] = Set.new 
+        @blocks[block] << [type, value]
+      end
     end
   end
 
-  def add_unknown_semantic(block_num)
-    @blocks[block_num] = "UNKNOWN SEMANTICS"
+  #testing 
+  def output_error_set
+    for i in 0..@blocks.size-1
+      puts @blocks[i].inspect
+    end
   end
-  
+
   def print_errors
-    puts @id
     puts "SEXP: " + @errors[:SEXP].to_s.delete(",") + ", "
     puts "KEYWORD: " + @errors[:KEYWORD].to_s.delete(",") + ", "
     puts "FUNCTION: " + @errors[:FUNCTION].to_s.delete(",") + ", "
@@ -69,23 +93,31 @@ class Validation
 
   def block_analyze
     for i in 0..@blocks.size-1
-      if @blocks[i].empty? && @blocks[i] != "UNKNOWN SEMANTICS"
-        @num_true = @num_true + 1
-      elsif @blocks[i] == "UNKNOWN SEMANTICS"
-        @semantics = @semantics + 1
+      if @blocks[i].nil? or @blocks[i].empty? 
+        @successful_blocks << i
       end
     end
   end
 
+  def add_unknown_semantic(block_num)
+    @semantics << block_num
+  end
+
   def display_blocks
     puts "====== Blocks in " + @id.to_s
-    puts @num_true.to_s + " out of " + @num_blocks.to_s + " had no errors"
-    puts @semantics.to_s + " did not add anything to the errors array"
+    puts @successful_blocks.size.to_s + " out of " + @num_blocks.to_s + " had no errors"
+    @successful_blocks.each do |block|
+      puts "Block " + block.to_s + " was successfuly translated"
+    end
+    @semantics.each do |block|
+      puts "Block " + block.to_s + " added nothing to the errors array"
+    end
+
   end
 
   def successful?
-    if @errors[:SEXP].size == 0 and @errors[:KEYWORD].size == 0 and @errors[:FUNCTION].size == 0 \
-    and @errors[:METHOD].size == 0 and @errors[:DATABASE].size == 0 and @errors[:UNKNOWN].size == 0 and @success then 
+    if @errors[:SEXP].empty? and @errors[:KEYWORD].empty? and @errors[:FUNCTION].empty? and \
+      @errors[:METHOD].empty? and @errors[:DATABASE].empty? and @errors[:UNKNOWN].empty? and @success then 
       true
     else
       false

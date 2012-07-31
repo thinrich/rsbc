@@ -1,17 +1,13 @@
-# sript to parse log files in rails/log/rsbc/rsbc.log and turn it into useable stats
-
 require( "./validation")
 require( "./stats")
 require( "./app_database")
 
-LIMIT = 10  # Modify this to set how many values are listed in under sexp, function and keyword lists
+LIMIT = 8  # Modify this to set how many values are listed in under sexp, function and keyword lists
 
 #=========================================================== MAIN METHOD ======================================#
 puts "type help for commands, 'q' to quit"
 data = Stats.new
-apps = AppDatabase.new
-
-# Main loop: For each rails app ... 
+apps = AppDatabase.new # Main loop: For each rails app ... 
 path = Dir["../*/log/rsbc/"]
 path.each do |path| 
 
@@ -54,17 +50,29 @@ end
 data.crunch
 
 #============================ Interactive portion of program =========================
-menu = gets.chomp
+line = gets.chomp.split(" ")
+menu = line[0]
 while !(menu == "q" || menu == "quit" || menu == "exit")
   case menu
   when 'help' then 
     puts "stats       print out general stats about all validations found"
     puts "builtins    print out info on the builtin validations"
     puts "successes   print info on validations that succeeded"
+    puts "failures    print info on validations that did not pass"
     puts "inspect     inspect a single validation, Input format: App~Model~validation "
     puts "list        list all apps, then enter app name to list models within, then enter model to list validations"
+    puts "query       search validations based on error type"
+    puts "priority    list the blocks to fix in order of the number of blocks that will successfully translate"
+    puts "               Block id is givien as: App_name ~ Model_name ~ Validaiton_name ~ block_num"
+    puts " **Note: Change LIMIT at the top of piecharts.rb to list more values for all commands"
 
   when 'stats' then data.output_stats 
+  when '1' then data.output_keyword
+  when '2' then data.output_function
+  when '3' then data.output_sexp
+  when '4' then data.output_method
+  when '5' then data.output_database 
+  when '6' then data.output_unknown
   when 'builtins' then data.output_builtins
   when 'blocks' then data.output_block_stats
   when 'successes' then 
@@ -75,15 +83,7 @@ while !(menu == "q" || menu == "quit" || menu == "exit")
     puts "============ Failed Validation Id's ============="
     failures = data.get_failures
     puts failures 
-  when 'inspect'
-    print "app name?: "
-    app = gets.chomp
-    print "model name?: "
-    model = gets.chomp
-    print "validation method name?: "
-    method = gets.chomp
-    id = app + "~" + model + "~" + method 
-    data.inspect(id)
+  when 'inspect' then data.inspect(line[1]) 
   when 'list'
     apps.list_apps
     puts "Enter an app name to get models contained in it: "
@@ -99,7 +99,12 @@ while !(menu == "q" || menu == "quit" || menu == "exit")
     print "Enter value: " 
     value = gets.chomp
     data.query(error, value)
+  when 'blocks-success' then data.output_successful_blocks
+  when 'blocks-semantic' then data.output_semantic 
+  when 'priority' then data.output_priority
     
   end
-  menu = gets.chomp
+  print "enter command: "
+  line = gets.chomp.split(" ")
+  menu = line[0]
 end
