@@ -65,6 +65,7 @@ class Stats
     elsif array[1] == "BLOCK" then @block = array[2].to_i;
     elsif array[1] == "NUM_BLOCKS" then validation.init_blocks(array[2].to_i);
     elsif array[1] == "BLOCK_SEMANTICS" then validation.add_unknown_semantic(@block);
+    elsif array[1] == "LOCATION" then validation.location = array[2].to_s + " " + array[3].to_s
     else
     #  begin 
         validation.add_error(array[1].to_sym, array[2] , @block-1)
@@ -225,6 +226,7 @@ class Stats
     puts ""
     if val = @val_indexable[index.to_i]
       puts "ID: " + val.id.to_s
+      puts "Location: " + val.location.to_s
       puts "Successful?: " + val.success.to_s
       puts "Number of blocks: " + val.num_blocks.to_s
       val.print_errors

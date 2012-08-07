@@ -27,6 +27,7 @@ module RsbcHelper
     validations.each do |validator| 
       @owner = validator.owner
       @method_name = validator.name
+      log_location(validator.source_location)
       begin 
         puts @owner.to_s + " " + @method_name.to_s
         kifstring = ruby2plato(validator)[0]
@@ -317,6 +318,7 @@ module RsbcHelper
 
   # shorthands for logging
   
+  def log_location(loc) lg("LOCATION " + loc[0].to_s + " " + loc[1].to_s) end
   def log_sexp(sexp) lg("SEXP " + sexp[0].to_s ) end
   def log_keyword(sexp) lg("KEYWORD " + sexp[0].to_s ) end
   def log_func(f) lg("FUNCTION " + f.to_s  ) end

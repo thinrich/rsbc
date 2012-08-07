@@ -3,7 +3,7 @@
 class Validation
   require 'set'
 
-  attr_accessor :success, :kifstring, :num_blocks, :id, :num_true, :semantics, :errors, :index, :blocks
+  attr_accessor :success, :kifstring, :num_blocks, :id, :num_true, :semantics, :errors, :index, :blocks, :location
 
   def initialize(id)
     @id = id 
