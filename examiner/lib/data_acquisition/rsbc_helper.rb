@@ -83,10 +83,23 @@ module RsbcHelper
     gem_validators.delete_if {|x| x == nil }
     validators.delete_if {|x| x.instance_values["block"] }
     validators.delete_if {|x| x.class == Symbol } 			                      	    # separating the model validations and the validator validations
-    methods = validators.map{ |validator| validator.class.instance_method(:validate) }       # -----/
+    methods = get_methods(validators)
     model_method_names.each do |def_name| methods << model.instance_method(def_name) end     #    Building array of UnboundMethods -----/ 
     methods.concat gem_validators
     return methods
+  end
+ 
+  # Methods can be either :validate or :validate_each 
+  def get_methods(validators) 
+    methods = []
+    validators.each do |v| 
+      if v.class.instance_method(:validate).source_location[0].include? "active_model/validator.rb" and v.class.instance_methods.include? :validate_each then 
+        methods << v.class.instance_method(:validate_each)
+      else       
+        methods << v.class.instance_method(:validate)
+      end 
+    end
+    methods 
   end
 
   # used to only grab Validators and Explicitly defined validations in the model

@@ -57,7 +57,6 @@ class Stats
   def parse_rsbc(line)
     array = line.split(" ") 
     validation = @validations[array[0]]
-    puts validation.id
     if array[1] == "FAILURE" 
       array.delete_at(0); 
       type = array.delete_at(0)
