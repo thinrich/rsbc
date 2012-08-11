@@ -2,7 +2,7 @@ require( "./validation")
 require( "./stats")
 require( "./app_database")
 
-LIMIT = 8  # Modify this to set how many values are listed in under sexp, function and keyword lists
+LIMIT = 100  # Modify this to set how many values are listed in under sexp, function and keyword lists
 
 #=========================================================== MAIN METHOD ======================================#
 puts "type help for commands, 'q' to quit"
@@ -22,9 +22,7 @@ path.each do |path|
     rsbc = File.open( path + "rsbc.log", 'r')
 
 
-    # Populate Hash of validations 
-    # Hash:    [ ID => Attributes ] 
-    # Attributes : Hash : [ Status => bool, SEXP => values, KEYWORD => values ...etc ] 
+    # Init the data with the validators by parsing the vlaidator_types.log
 
     types.each_line {|line|
       array = line.split(" ")
@@ -36,6 +34,7 @@ path.each do |path|
       when "validator" then data.plus_one("validator"); data.add(array[0]); apps.add(array[0])
       when "model_defined" then data.plus_one("model_defined"); data.add(array[0]); apps.add(array[0])
       end
+      if array[1] == "gem" then data.plus_one("gem"); data.add(array[0]); apps.add(array[0]) end
     }
 
     # Parse rsbc.log and add to validations appropriately

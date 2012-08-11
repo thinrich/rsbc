@@ -29,20 +29,23 @@ def classify_type(model)
   validators = get_validations(model)
   validators.each do |validator|
     method = validator.to_s.split(" ")[1]
-    types.print app_name.to_s + "~" + model.to_s + "~" + validator.name.to_s + " " + method
-    if validator.owner == model and validator.name.to_s.include? "validate_associated_records_for"
-      type = "association"
-    elsif validator.owner == model 
-      type = "model_defined"
-    elsif method.to_s.include? "ActiveModel::Validations" or method.to_s.include? "ActiveRecord::Validations"
-      type = "builtin"
-    elsif validator.owner < ActiveModel::Validator
-      type = "validator"
-    else
-      type = "unknown"
+    if validator.class != Proc
+      types.print app_name.to_s + "~" + model.to_s + "~" + validator.name.to_s + " " + method
+      if validator.owner == model and validator.name.to_s.include? "validate_associated_records_for"
+        type = "association"
+      elsif validator.owner == model 
+        type = "model_defined"
+      elsif method.to_s.include? "ActiveModel::Validations" or method.to_s.include? "ActiveRecord::Validations"
+        type = "builtin"
+      elsif validator.owner < ActiveModel::Validator and !validator.instance_values["block"] 
+        type = "validator"
+      else 
+        type = "unknown"
+      end
+    else 
+      types.print app_name.to_s + "~" + model.to_s + "~" + validator.source_location[1].to_s
+      type = "gem"
     end
-
     types.puts " " + type + " "
-
   end
 end

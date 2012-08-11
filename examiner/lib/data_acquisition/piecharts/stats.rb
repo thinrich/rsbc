@@ -26,6 +26,7 @@ class Stats
     @num_builtin = 0
     @num_validator = 0
     @num_unknown = 0
+    @num_gem = 0
 
     #--Types of builtins--#
     @num_acceptance = 0
@@ -56,6 +57,7 @@ class Stats
   def parse_rsbc(line)
     array = line.split(" ") 
     validation = @validations[array[0]]
+    puts validation.id
     if array[1] == "FAILURE" 
       array.delete_at(0); 
       type = array.delete_at(0)
@@ -83,6 +85,7 @@ class Stats
       when "unknown" then @num_unknown = @num_unknown + 1
       when "validator" then @num_validator = @num_validator + 1; @num_custom = @num_custom + 1
       when "model_defined" then @num_model_defined = @num_model_defined + 1; @num_custom = @num_custom + 1
+      when "gem" then @num_gem = @num_gem + 1
     end
     @total_validators = @total_validators + 1 
   end 
@@ -328,6 +331,7 @@ class Stats
     puts "=========== Custom defined validations breakdown ==========="
     print "Total validations defined as Validators: "; inspect_stat(@num_validator)
     print "Total validations defined in model: "; inspect_stat(@num_model_defined)
+    print "Total validations defined in gem: "; inspect_stat(@num_gem)
     puts ""
     puts "=========== Breakdown of custom validator types ============="
     puts "Number of successfully translated validators: " + @successful.to_s + " (" +  (@successful * 100 / @num_custom).to_s + "%)"

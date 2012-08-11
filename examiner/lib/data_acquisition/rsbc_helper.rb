@@ -3,7 +3,7 @@ module RsbcHelper
   Supported_funcs = [:<,:>,:==,:>=,:<=]
   Database_calls = [:find]
   Temp_filename = "/tmp/constraints"
-  Plato_path = "~/Research/code/clir/rsbc/externals/clicl/bin/clicl"
+  Plato_path = "~/rsbc/externals/clicl/bin/clicl"
   Outdir = "#{Rails.root}/app/assets/javascripts/"    
   @@vars = Set.new()
 
@@ -25,15 +25,17 @@ module RsbcHelper
     #kifstring = "(and" 
     kifstring = ""
     validations.each do |validator| 
+      if validator.class == Proc then mimic_on_proc(validator) else
       @owner = validator.owner
       @method_name = validator.name
       log_location(validator.source_location)
       begin 
-        puts @owner.to_s + " " + @method_name.to_s
-        kifstring = ruby2plato(validator)[0]
-        if check_plato(kifstring) then log_success() else log_failure(kifstring) end
+	puts @owner.to_s + " " + @method_name.to_s
+	kifstring = ruby2plato(validator)[0]
+	if check_plato(kifstring) then log_success() else log_failure(kifstring) end
       rescue Exception => exc      # May want to my more explicit and include cases for differant exceptions to make logs more useful
-        log_unknown(exc)
+	log_unknown(exc)
+      end
       end
     end
     #kifstring += ")"
@@ -42,8 +44,33 @@ module RsbcHelper
 
     # create sanitization code from model's typing info
     sanifile = Outdir + model.name + "_sanitization.js"
-    create_sanitization(model,@@vars,sanifile)  # TODO Not sure if this is ok, (Using the class variable @@vars, don't think it should matter)
+   # create_sanitization(model,@@vars,sanifile)  # TODO Not sure if this is ok, (Using the class variable @@vars, don't think it should matter)
     return [validfile,sanifile]
+  end
+
+  # Run the translator on a Proc, this is usually the case when a validator is inside a gem 
+  def mimic_on_proc(validator)
+      @owner = get_gem(validator) 
+      @method_name = validator.source_location[1]
+      log_location(validator.source_location)
+      begin 
+	kifstring = ruby2plato(validator)[0]
+	if check_plato(kifstring) then log_success() else log_failure(kifstring) end
+      rescue Exception => exc      # May want to my more explicit and include cases for differant exceptions to make logs more useful
+	log_unknown(exc)
+      end
+  end
+
+  # Gets the gem that the Proc is located in. This is a hacky way of doing it and might not hold up for all cases.
+  def get_gem(p)  # p is the proc
+    gem = ""
+    array = p.source_location[0].split("/")
+    array[array.size-1].split(".")[0].split("_").each do |x| gem << x.capitalize end 
+    begin
+    if eval(gem) then return eval(gem) else log_unknown(gem) end
+    catch Exception => exc
+      puts exc
+    end
   end
 
   # Grabs all validation methods used in the model or defined in a vaildator used by the model
@@ -52,17 +79,22 @@ module RsbcHelper
     validators = model._validate_callbacks.map {|callback| callback.raw_filter}     # Gives the Validators or the symbols (name of model defined validation methods) 
     model_method_names = validators.collect {|x| if x.class == Symbol then x end }  # example would be   :validate_month
     model_method_names.delete_if{|x| x == nil }					    
+    gem_validators = validators.collect {|x| if x.instance_values["block"] then x.instance_values["block"]  end}  # Returns a Proc with the validation code
+    gem_validators.delete_if {|x| x == nil }
+    validators.delete_if {|x| x.instance_values["block"] }
     validators.delete_if {|x| x.class == Symbol } 			                      	    # separating the model validations and the validator validations
     methods = validators.map{ |validator| validator.class.instance_method(:validate) }       # -----/
     model_method_names.each do |def_name| methods << model.instance_method(def_name) end     #    Building array of UnboundMethods -----/ 
+    methods.concat gem_validators
     return methods
   end
 
   # used to only grab Validators and Explicitly defined validations in the model
   def remove_unwanted(validators)
-    validators.delete_if {|x| x.owner == @model and x.to_s.include? "validate_associated_records_for" }
+    validators.delete_if {|x| if x.public_methods.include? :owner then x.owner == @model and x.to_s.include? "validate_associated_records_for" end }
     validators.delete_if {|x| x.to_s.include? "ActiveModel::Validations" or x.to_s.include? "ActiveRecord::Validations" }
-    validators.delete_if {|x| x.owner != @model and !(x.owner < ActiveModel::Validator)} end
+    validators.delete_if {|x| if x.public_methods.include? :owner then x.owner != @model and !(x.owner < ActiveModel::Validator) end } 
+  end
 
   def create_sanitization(model,vars,filename)
   	h = Hash.new  # hash keyed on string of field name
@@ -148,7 +180,7 @@ module RsbcHelper
     else puts "ERROR: cannot run on blocks"; log_unknown(ast)
     end
            
-  	#ruby2kif(s.to_ast,nil)
+  	if s.class == Proc then ruby2kif(s.to_ast,nil) end
   	return @@plato_output.string, @@vars
   end
 
@@ -179,7 +211,7 @@ module RsbcHelper
       op; pk("or "); ruby2kif(sexp[1],var); sp; ruby2kif(sexp[2],var); cl
     when :not #(:not x)
 		op; pk("not "); ruby2kif(sexp[1],var); cl
-  	else log_sexp(sexp); return
+    else log_sexp(sexp); if sexp[1] then ruby2kif(sexp[1], var) end
     end  # throw error when found unknown operator
   end
 
@@ -243,7 +275,8 @@ module RsbcHelper
         begin 
           ruby2kif(@owner.instance_method(sexp[2]).to_ast, var)
         rescue  Exception => exc 
-          log_method(@owner.name.to_s + ".instance_method(:" + sexp[2].to_s + ")") # Probably should change to EXTERNAL_METHOD_ERROR
+          if @owner.name then log_method(@owner.name.to_s + ".instance_method(:" + sexp[2].to_s + ")") # Probably should change to EXTERNAL_METHOD_ERROR
+          else log_method(sexp[2].to_s) end
         end
       return true
       end
