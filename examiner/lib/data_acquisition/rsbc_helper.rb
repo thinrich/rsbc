@@ -223,8 +223,10 @@ module RsbcHelper
     when :or #(:or x y)
       op; pk("or "); ruby2kif(sexp[1],var); sp; ruby2kif(sexp[2],var); cl
     when :not #(:not x)
-		op; pk("not "); ruby2kif(sexp[1],var); cl
-    else log_sexp(sexp); if sexp[1] then ruby2kif(sexp[1], var) end
+      op; pk("not "); ruby2kif(sexp[1],var); cl
+    when :case 
+      op;  
+    else log_sexp(sexp)
     end  # throw error when found unknown operator
   end
 
