@@ -8,18 +8,18 @@ LIMIT = 100  # Modify this to set how many values are listed in under sexp, func
 puts "type help for commands, 'q' to quit"
 data = Stats.new
 apps = AppDatabase.new # Main loop: For each rails app ... 
-path = Dir["../*/log/rsbc/"]
+path = Dir["/homes/mcueno/apps/*"]
 path.each do |path| 
 
   data.plus_one_app
   app_name = path.split("/")[0]
   
-  if File.exists?(path + "validator_types") and File.exists?(path + "rsbc.log") then
+  if File.exists?(path + "/log/rsbc/validator_types") and File.exists?(path + "/log/rsbc/rsbc.log") then
     data.plus_one_custom
 
     # Import validator_types and rsbc.log into local Files
-    types = File.open( path + "validator_types", 'r')
-    rsbc = File.open( path + "rsbc.log", 'r')
+    types = File.open( path + "/log/rsbc/validator_types", 'r')
+    rsbc = File.open( path + "/log/rsbc/rsbc.log", 'r')
 
 
     # Init the data with the validators by parsing the vlaidator_types.log
@@ -43,6 +43,8 @@ path.each do |path|
     }
 
   # close file 
+  else 
+    puts "ERROR: rake rsbc failed on   " + path.to_s
   end
 end
 

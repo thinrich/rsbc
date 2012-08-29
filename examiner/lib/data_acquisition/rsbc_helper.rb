@@ -1,7 +1,7 @@
 module RsbcHelper
   require 'set'
   Supported_funcs = [:<,:>,:==,:>=,:<=]
-  Database_calls = [:find]
+  Database_calls = [:find, :find_by_sql, :find_all, :find_first, :find_last, :where]
   Temp_filename = "/tmp/constraints"
   Plato_path = "~/rsbc/externals/clicl/bin/clicl"
   Outdir = "#{Rails.root}/app/assets/javascripts/"    
