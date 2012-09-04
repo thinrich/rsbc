@@ -43,6 +43,7 @@ class Stats
     @num_validates_each = 0
 
     #--status of validations -- #  These hold the number of VALIDATAIONS with errors regarding the following (not the number of occurances)
+    #--the *_h holds the number of occurances of each kind of error
     @successful = 0
     @keyword = 0; @keyword_h = Hash.new {|hash, key| hash[key] = 0}
     @function = 0; @function_h = Hash.new {|hash, key| hash[key] = 0}
@@ -60,7 +61,7 @@ class Stats
     if array[1] == "FAILURE" 
       array.delete_at(0); 
       type = array.delete_at(0)
-      value = array.join
+      value = array.join(" ")
       validation.add_error(type.to_sym, value, @block-1)
     elsif array[1] == "SUCCESS" then validation.success = true;
     elsif array[1] == "BLOCK" then @block = array[2].to_i;

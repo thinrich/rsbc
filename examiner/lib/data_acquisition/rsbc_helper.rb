@@ -214,7 +214,7 @@ module RsbcHelper
 		if sexp[2]
 		  op; pk("=> "); ruby2kif(sexp[1],var); sp; ruby2kif(sexp[2],var); cl;
 		end
-		if sexp[3] 
+		if sexp[3] # else
       op;pk("=> " ); op;pk("not "); ruby2kif(sexp[1],var);cl; sp; ruby2kif(sexp[3],var);cl
 		end
  
@@ -224,8 +224,12 @@ module RsbcHelper
       op; pk("or "); ruby2kif(sexp[1],var); sp; ruby2kif(sexp[2],var); cl
     when :not #(:not x)
       op; pk("not "); ruby2kif(sexp[1],var); cl
-    when :case 
-      op;  
+    when :case # (:case variable case1 case2 case3.....)
+      parseCase(sexp,var)
+    when :array then rubyobj2kif(sexp[1],var)  #TODO this is probably bad...
+    when :when then # hehe 
+      ruby2kif(sexp[1],var); 
+      
     else log_sexp(sexp)
     end  # throw error when found unknown operator
   end
@@ -239,6 +243,14 @@ module RsbcHelper
     cl
   end
 
+  def parseCase(sexp, var)
+    return if !sexp or sexp[0] != :case
+    op; pk("and")
+    for i in 2..sexp.size-2
+     op; pk("=> "); op; pk("== "); ruby2kif(sexp[1],var); sp; ruby2kif(sexp[i][1],var); cl; ruby2kif(sexp[i][2],var); cl;
+    end
+    cl;
+  end
 
   def rubyterm2kif(sexp, var)
 	return unless sexp
@@ -283,12 +295,12 @@ module RsbcHelper
   # 1. The call is referencing an instance variable OR 2. the call is making an external method call
   def catch_nil(sexp, var)
     if sexp[1].nil?
-      if @model.columns.map{|x| x.name.to_sym}.include? sexp[2] then 
+      if @model.columns.map{|x| x.name.to_sym}.include? sexp[2] then   # columns = instance variables / this is the first case
         pk("?" + sexp[2].to_s)
         return true
       else
         begin 
-          ruby2kif(@owner.instance_method(sexp[2]).to_ast, var)
+          ruby2kif(@owner.instance_method(sexp[2]).to_ast, var)   # attempt to make the method call / this is case 2
         rescue  Exception => exc 
           if @owner.name then log_method(@owner.name.to_s + ".instance_method(:" + sexp[2].to_s + ")") # Probably should change to EXTERNAL_METHOD_ERROR
           else log_method(sexp[2].to_s) end
