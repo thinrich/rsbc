@@ -42,8 +42,11 @@ def classify_type(model)
       else 
         type = "unknown"
       end
-    else 
+    elsif validator.methods.include? :source_location
       types.print app_name.to_s + "~" + model.to_s + "~" + validator.source_location[1].to_s
+      type = "gem"
+    else
+      types.print app_name.to_s + "~" + model.to_s + "~" + "ruby1.8.7-source_not_known"
       type = "gem"
     end
     types.puts " " + type + " "

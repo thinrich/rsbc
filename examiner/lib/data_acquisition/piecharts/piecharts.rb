@@ -2,7 +2,8 @@ require( "./validation")
 require( "./stats")
 require( "./app_database")
 
-LIMIT = 100  # Modify this to set how many values are listed in under sexp, function and keyword lists
+LIMIT =40  # Modify this to set how many values are listed in under sexp, function and keyword lists
+ERRORS = true  # suppress errors
 
 #=========================================================== MAIN METHOD ======================================#
 puts "type help for commands, 'q' to quit"
@@ -44,7 +45,7 @@ path.each do |path|
 
   # close file 
   else 
-    puts "ERROR: rake rsbc failed on   " + path.to_s
+    if ERRORS then puts "ERROR: rake rsbc failed on   " + path.to_s end
   end
 end
 

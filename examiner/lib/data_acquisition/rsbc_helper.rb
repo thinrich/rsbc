@@ -1,7 +1,11 @@
 module RsbcHelper
   require 'set'
   Supported_funcs = [:<,:>,:==,:>=,:<=]
-  Database_calls = [:find, :find_by_sql, :find_all, :find_first, :find_last, :where]
+  Database_calls = [:find, :find_by_sql, :find_all, :find_first, :find_last, :where, :all, :delete, :delete_all, :destroy, :destroy_all,
+                    :exists?, :get_primary_key, :last, :inspect, :reset_column_information, :reset_columns, :reset_pimary_key, :reset_counters,
+                    :reset_subclasses, :rest_table_name, :set_primary_key, :set_readonly_option!, :set_sequence_name, :set_table_name, 
+                    :set_inheritance_column, :table_exists?, :update, :update_all]
+
   Temp_filename = "/tmp/constraints"
   Plato_path = "~/rsbc/externals/clicl/bin/clicl"
   Outdir = "#{Rails.root}/app/assets/javascripts/"    
@@ -28,13 +32,13 @@ module RsbcHelper
       if validator.class == Proc then mimic_on_proc(validator) else
       @owner = validator.owner
       @method_name = validator.name
-      log_location(validator.source_location)
+      if validator.methods.include? :source_location then log_location(validator.source_location) end
       begin 
-	puts @owner.to_s + " " + @method_name.to_s
-	kifstring = ruby2plato(validator)[0]
-	if check_plato(kifstring) then log_success() else log_failure(kifstring) end
+        puts @owner.to_s + " " + @method_name.to_s
+        kifstring = ruby2plato(validator)[0]
+          if check_plato(kifstring) then log_success() else log_failure(kifstring) end
       rescue Exception => exc      # May want to my more explicit and include cases for differant exceptions to make logs more useful
-	log_unknown(exc)
+        log_unknown(exc)
       end
       end
     end
@@ -50,15 +54,19 @@ module RsbcHelper
 
   # Run the translator on a Proc, this is usually the case when a validator is inside a gem 
   def mimic_on_proc(validator)
+    if validator.methods.include? :source_location 
       @owner = get_gem(validator) 
       @method_name = validator.source_location[1]
-      log_location(validator.source_location)
+      if validator.methods.include? :source_location then log_location(validator.source_location) end
       begin 
-	kifstring = ruby2plato(validator)[0]
-	if check_plato(kifstring) then log_success() else log_failure(kifstring) end
-      rescue Exception => exc      # May want to my more explicit and include cases for differant exceptions to make logs more useful
-	log_unknown(exc)
+        kifstring = ruby2plato(validator)[0]
+        if check_plato(kifstring) then log_success() else log_failure(kifstring) end
+          rescue Exception => exc      # May want to my more explicit and include cases for differant exceptions to make logs more useful
+        log_unknown(exc)
       end
+    else 
+      puts "Runtime Error: Procs not supported in ruby 1.8.7 at this time." 
+    end
   end
 
   # Gets the gem that the Proc is located in. This is a hacky way of doing it and might not hold up for all cases.
@@ -93,18 +101,22 @@ module RsbcHelper
   def get_methods(validators) 
     methods = []
     validators.each do |v| 
-      if v.class.instance_method(:validate).source_location[0].include? "active_model/validator.rb" and v.class.instance_methods.include? :validate_each then 
-        methods << v.class.instance_method(:validate_each)
-      else       
-        methods << v.class.instance_method(:validate)
-      end 
+      if v.class.instance_method(:validate).methods.include? :source_location
+        if v.class.instance_method(:validate).source_location[0].include? "active_model/validator.rb" and v.class.instance_methods.include? :validate_each then 
+          methods << v.class.instance_method(:validate_each)
+        else       
+          methods << v.class.instance_method(:validate)
+        end 
+      else
+        methods << v.class.instance_method(:validate)  # default / this happens in ruby 1.8.7 becuase the 'source_location' method is not included until 1.9.3
+      end
     end
     methods 
   end
 
   # used to only grab Validators and Explicitly defined validations in the model
   def remove_unwanted(validators)
-    validators.delete_if {|x| if x.public_methods.include? :owner then x.owner == @model and x.to_s.include? "validate_associated_records_for" end }
+    validators.delete_if {|x| x.to_s.include? "validate_associated_records_for" }
     validators.delete_if {|x| x.to_s.include? "ActiveModel::Validations" or x.to_s.include? "ActiveRecord::Validations" }
     validators.delete_if {|x| if x.public_methods.include? :owner then x.owner != @model and !(x.owner < ActiveModel::Validator) end } 
   end
