@@ -230,7 +230,7 @@ class Stats
     if val = @val_indexable[index.to_i]
       puts "ID: " + val.id.to_s
       puts "Location: " + val.location.to_s
-      puts "Successful?: " + val.success.to_s
+      puts "Successful?: " + val.plato_success.to_s
       puts "Number of blocks: " + val.num_blocks.to_s
       val.print_errors
       val.display_blocks
