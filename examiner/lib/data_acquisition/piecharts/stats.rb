@@ -63,7 +63,7 @@ class Stats
       type = array.delete_at(0)
       value = array.join(" ")
       validation.add_error(type.to_sym, value, @block-1)
-    elsif array[1] == "SUCCESS" then validation.success = true;
+    elsif array[1] == "SUCCESS" then validation.plato_success = true;
     elsif array[1] == "BLOCK" then @block = array[2].to_i;
     elsif array[1] == "NUM_BLOCKS" then validation.init_blocks(array[2].to_i);
     elsif array[1] == "BLOCK_SEMANTICS" then validation.add_unknown_semantic(@block);
@@ -160,7 +160,7 @@ class Stats
       unless validation.get_keyword.empty?
         @keyword = @keyword + 1
         validation.get_keyword.each do |sexp|
-          if @sexp_h.include? sexp then 
+          if @keyword_h.include? sexp then 
             @keyword_h[sexp] = @keyword_h[sexp] + 1 
           else 
             @keyword_h[sexp] = 1
@@ -327,11 +327,11 @@ class Stats
     print "Total association validations (Those that occur when a has_many is used): "; inspect_stat(@num_associations)
     print "Total builtin validations: "; inspect_stat(@num_builtin)
     print "Total unknown validations: "; inspect_stat(@num_unknown)
+    print "Total validations defined in gem: "; inspect_stat(@num_gem)
     puts ""
     puts "=========== Custom defined validations breakdown ==========="
     print "Total validations defined as Validators: "; inspect_stat(@num_validator)
     print "Total validations defined in model: "; inspect_stat(@num_model_defined)
-    print "Total validations defined in gem: "; inspect_stat(@num_gem)
     puts ""
     puts "=========== Breakdown of custom validator types ============="
     puts "Number of successfully translated validators: " + @successful.to_s + " (" +  (@successful * 100 / @num_custom).to_s + "%)"
@@ -439,5 +439,17 @@ class Stats
     puts "Unknown semantics blocks: " + @num_blocks_unknown.to_s
     puts ""
     puts "To view validaions that contain the above enter either 'blocks-success' or 'blocks-semantic'"
+  end
+
+  def output_plato_only
+    
+    puts "========== blocks with no translation problems but where plato fails ============="
+
+    @validations.values.each do |validation| 
+      if validation.has_no_errors and !validation.successful? then 
+        puts validation.id
+      end
+    end
+
   end
 end

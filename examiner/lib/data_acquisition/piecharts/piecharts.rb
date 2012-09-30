@@ -3,7 +3,7 @@ require( "./stats")
 require( "./app_database")
 
 LIMIT =40  # Modify this to set how many values are listed in under sexp, function and keyword lists
-ERRORS = true  # suppress errors
+ERRORS = false  # suppress errors
 
 #=========================================================== MAIN METHOD ======================================#
 puts "type help for commands, 'q' to quit"
@@ -52,6 +52,7 @@ end
 data.crunch
 
 #============================ Interactive portion of program =========================
+print "enter command: "
 line = gets.chomp.split(" ")
 menu = line[0]
 while !(menu == "q" || menu == "quit" || menu == "exit")
@@ -104,6 +105,7 @@ while !(menu == "q" || menu == "quit" || menu == "exit")
   when 'blocks-success' then data.output_successful_blocks
   when 'blocks-semantic' then data.output_semantic 
   when 'priority' then data.output_priority
+  when 'plato' then data.output_plato_only
     
   end
   print "enter command: "

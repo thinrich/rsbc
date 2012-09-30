@@ -3,12 +3,12 @@
 class Validation
   require 'set'
 
-  attr_accessor :success, :kifstring, :num_blocks, :id, :num_true, :semantics, :errors, :index, :blocks, :location
+  attr_accessor :plato_success, :kifstring, :num_blocks, :id, :num_true, :semantics, :errors, :index, :blocks, :location
 
   def initialize(id)
     @id = id 
     @errors = {:SEXP => [], :KEYWORD => [], :FUNCTION => [], :METHOD => [], :DATABASE => [], :UNKNOWN => []}
-    @success = false # Corresponds to if check_plato succeeded or not
+    @plato_success = false # Corresponds to if check_plato succeeded or not
     @blocks = Array.new #  where block[i] = the errors in that block (a Set) and i = the block number
     @semantics = []	# entries correspond to the block that has the semantic error (adds nothing to :errors)
     @successful_blocks = []  	# entries correspond to the block that was succesfully translated end
@@ -83,11 +83,12 @@ class Validation
   end
 
   def print_errors
-    puts "SEXP: " + @errors[:SEXP].to_s.delete(",") + ", "
-    puts "KEYWORD: " + @errors[:KEYWORD].to_s.delete(",") + ", "
-    puts "FUNCTION: " + @errors[:FUNCTION].to_s.delete(",") + ", "
-    puts "METHOD: " + @errors[:METHOD].to_s.delete(",") + ", "
-    puts "DATABASE: " + @errors[:DATABASE].to_s.delete(",") 
+    puts "SEXP: " + @errors[:SEXP].to_s.delete(",") 
+    puts "KEYWORD: " + @errors[:KEYWORD].to_s.delete(",")
+    puts "FUNCTION: " + @errors[:FUNCTION].to_s.delete(",")
+    puts "METHOD: " + @errors[:METHOD].to_s.delete(",")
+    puts "DATABASE: " + @errors[:DATABASE].to_s.delete(",")
+    puts "UNKNOWN: " + @errors[:UNKNOWN].to_s.delete(",") 
     puts "Kifstring: " + @kifstring.to_s 
   end
 
@@ -115,9 +116,17 @@ class Validation
 
   end
 
-  def successful?
+  def has_no_errors
     if @errors[:SEXP].empty? and @errors[:KEYWORD].empty? and @errors[:FUNCTION].empty? and \
-      @errors[:METHOD].empty? and @errors[:DATABASE].empty? and @errors[:UNKNOWN].empty? and @success then 
+      @errors[:METHOD].empty? and @errors[:DATABASE].empty? and @errors[:UNKNOWN].empty? then 
+      true
+    else
+      false
+    end
+  end
+
+  def successful?
+    if has_no_errors and @plato_success then 
       true
     else
       false
