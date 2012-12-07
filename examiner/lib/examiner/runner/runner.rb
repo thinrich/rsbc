@@ -90,19 +90,19 @@ module Examiner
             if !File.exists?( "#{dest_root}/#{repo["name"]}/Gemfile" )
               say_status :skipping, "#{repo["name"]} is not a Rails 3 app because it has no Gemfile", verbose: true
               run "rm -rf #{dest_root}/#{repo["name"]}", verbose: true
-              retry
+              next
             end
 
             if !File.directory?( "#{dest_root}/#{repo["name"]}/app" )
               say_status :skipping, "#{repo["name"]} is not an app, it's probably just a gem or some other thing", verbose: true
               run "rm -rf #{dest_root}/#{repo["name"]}", verbose: true
-              retry
+              next
             end
 
             if !File.directory?( "#{dest_root}/#{repo["name"]}/app/models" ) or !Dir["#{dest_root}/#{repo["name"]}/app/models/*"].empty?
               say_status :skipping, "#{repo["name"]} either doesn't have the app/models dir or just doesn't have any models in that directory", verbose: true
               run "rm -rf #{dest_root}/#{repo["name"]}", verbose: true
-              retry
+              next
             end
 
             inside repo["name"], verbose: true do |dest_root|
