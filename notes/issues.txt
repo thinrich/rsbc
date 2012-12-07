@@ -25,3 +25,7 @@ o Racc::ParseError:
   parse error on value ":" (tCOLON)
 
 - (mike) I get this error when I try to do a .to_ast on any method found within the Birthdate model in the rails console. I'm not sure if this is specific to me or you guys are having the same issue. I don't think I got this error in previous versions of the repository.
+
+- add gem 'live_ast_ripper' to Gem file
+- add require 'live_ast_ripper' near the top of config/application.rb 
+- the problem is that Ruby2Ruby doesn't support Ruby 1.9 hashes of the form { key: 'value' }, only supports old-style { :key => 'value' }
