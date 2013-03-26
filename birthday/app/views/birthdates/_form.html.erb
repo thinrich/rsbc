@@ -16,6 +16,7 @@
 	}
 	
 	function validate( field, x ) {
+		console.log("Validating " + field); 
 	    // Changed this so that we're calling negx_month_b, which *always* returns a set.
 	    //   If the set is empty, there is no error.
 	    // Also, there is now a DEPENDENT array, where dependent['month'] gives an array of
@@ -49,13 +50,12 @@
 	
 	function bind() {
 		
-		
-		
 		$.each( fields, function( i, e ) {
 			console.log( 'binding ' + e );
-			// console.log( 'input[name="' + e + '"]' );
+			console.log( 'input[name="' + e + '"]' );
 			$( 'input[name="' + e + '"]' ).change( e, function( evt ) {
 				dependent[e].mapc( validate );
+				console.log("something got binded at least"); 
 			});
 		});
 		
@@ -76,7 +76,7 @@
 	$(document).ready(function() {
 		//bind();
 	});
-	
+
 </script>
 <%= form_for(@birthdate, url: "/birthdates", validate: true ) do |f| %>
   <% if @birthdate.errors.any? %>
@@ -110,3 +110,4 @@
     <%= f.submit %>
   </div>
 <% end %>
+

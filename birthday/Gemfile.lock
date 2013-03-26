@@ -1,10 +1,4 @@
 PATH
-  remote: ../cenforce
-  specs:
-    cenforce (0.0.1)
-      rails (~> 3.2.2)
-
-PATH
   remote: ../client_side_validations
   specs:
     client_side_validations (3.1.4)
@@ -125,7 +119,6 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  cenforce!
   client_side_validations!
   coffee-rails (~> 3.2.1)
   jquery-rails
